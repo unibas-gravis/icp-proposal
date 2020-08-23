@@ -64,7 +64,6 @@ class SamplingRegistration(model: StatisticalMeshModel, sample: TriangleMesh3D, 
         if (modelUi.isDefined) {
           val thetaToUse = if (acceptRejectLogger.logSamples.nonEmpty) {
             acceptRejectLogger.logSamples.last // Get last accepted sample
-            //            bestSamplelogger.currentBestSample().get  // Get overall best sample
           }
           else {
             theta
@@ -80,7 +79,7 @@ class SamplingRegistration(model: StatisticalMeshModel, sample: TriangleMesh3D, 
         val bestTheta = bestSamplelogger.currentBestSample().get
         val rigidTrans = ModelFittingParameters.poseTransform(bestTheta)
         val bestStuff = model.instance(bestTheta.shapeParameters.parameters).transform(rigidTrans)
-        RegistrationComparison.evaluateReconstruction2GroundTruth("Sampling", sample, bestStuff)
+        RegistrationComparison.evaluateReconstruction2GroundTruthBoundaryAware("Sampling", bestStuff, sample)
       }
       theta
     }

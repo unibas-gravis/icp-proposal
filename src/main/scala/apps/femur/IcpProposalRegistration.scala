@@ -19,11 +19,13 @@ package apps.femur
 import java.awt.Color
 import java.io.File
 
-import api.other.{ModelAndTargetSampling, RegistrationComparison}
+import api.other.{ModelAndTargetSampling, RegistrationComparison, TargetSampling}
 import api.sampling._
-import api.sampling.evaluators.SymmetricEvaluation
+import api.sampling.evaluators.{SymmetricEvaluation, TargetToModelEvaluation}
 import apps.femur.Paths.dataFemurPath
-import scalismo.geometry._3D
+import apps.femur.RandomSamplesFromModelForTest.InitialiseShapeParameters
+import scalismo.geometry.{EuclideanVector, EuclideanVector3D, _3D}
+import scalismo.io.{MeshIO, StatismoIO}
 import scalismo.mesh.{TriangleMesh, TriangleMesh3D}
 import scalismo.sampling.DistributionEvaluator
 import scalismo.sampling.proposals.MixtureProposal.ProposalGeneratorWithTransition
@@ -53,16 +55,25 @@ object IcpProposalRegistration {
 
     val (model, modelLms, targetMesh, targetLms) = LoadTestData.modelAndTarget()
 
-    val numOfEvaluatorPoints = model.referenceMesh.pointSet.numberOfPoints // Used for the likelihood evaluator
-    val numOfICPPointSamples = numOfEvaluatorPoints // Used for the ICP proposal
-    val numOfSamples = 1000 // Length of Markov Chain
+    val numOfEvaluatorPoints = model.referenceMesh.pointSet.numberOfPoints/2 // Used for the likelihood evaluator
+    val numOfICPPointSamples = model.rank*2 // Used for the ICP proposal
+    val numOfSamples = 10000 // Length of Markov Chain
 
-    val proposalIcp = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling)
+    // Closest Point proposal
+    // projectionDirection = TargetSampling (if registering partial meshes)
+    val proposalIcp = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 100.0, noiseAlongNormal = 3.0, stepLength = 0.1)
+    // Random walk proposal
+//    val proposalRandom = MixedProposalDistributions.mixedProposalRandom(model)
+
+    val proposal = proposalIcp // proposalRandom
 
     // Euclidean likelihood evaluator using a Gaussian distribution
-    val evaluator = ProductEvaluators.proximityAndIndependent(model, targetMesh, SymmetricEvaluation, uncertainty = 1.0, numberOfEvaluationPoints = numOfEvaluatorPoints)
+    // evaluationMode = TargetToModelEvaluation (if registering partial meshes)
+    val euclideanEvaluator = ProductEvaluators.proximityAndIndependent(model, targetMesh, evaluationMode = SymmetricEvaluation, uncertainty = 1.0, numberOfEvaluationPoints = numOfEvaluatorPoints)
     // Hausdorff likelihood evaluator using an Exponential distribution
-    //    val evaluator = ProductEvaluators.proximityAndHausdorff(model, targetMesh, uncertainty = 100.0)
+//    val hausdorffEvaluator = ProductEvaluators.proximityAndHausdorff(model, targetMesh, uncertainty = 100.0)
+
+    val evaluator = euclideanEvaluator
 
     val ui = ScalismoUI(s"MH-ICP-proposal-registration")
     val modelGroup = ui.createGroup("modelGroup")
@@ -75,8 +86,7 @@ object IcpProposalRegistration {
     ui.show(targetGroup, targetLms, "landmarks")
     showTarget.color = Color.YELLOW
 
-
-    val bestRegistration = fitting(model, targetMesh, evaluator, proposalIcp, numOfSamples, Option(showModel), new File(logPath, s"icpProposalRegistration.json"))
+    val bestRegistration = fitting(model, targetMesh, evaluator, proposal, numOfSamples, Option(showModel), new File(logPath, s"icpProposalRegistration.json"))
     ui.show(finalGroup, bestRegistration, "best-fit")
     RegistrationComparison.evaluateReconstruction2GroundTruth("SAMPLE", bestRegistration, targetMesh)
   }

@@ -24,11 +24,12 @@ import scalismo.io.{LandmarkIO, MeshIO, StatismoIO}
 import scalismo.mesh.TriangleMesh
 import scalismo.statisticalmodel.StatisticalMeshModel
 import scalismo.utils.Random.implicits._
+import apps.femur.Paths.dataFemurPath
+
 
 object LoadTestData {
 
   def modelAndTarget(): (StatisticalMeshModel, Seq[Landmark[_3D]], TriangleMesh[_3D], Seq[Landmark[_3D]]) = {
-    val dataFemurPath = new File("data/femur")
 
     val modelFile = new File(dataFemurPath, "femur_gp_model_50-components.h5")
     val model = StatismoIO.readStatismoMeshModel(modelFile).get

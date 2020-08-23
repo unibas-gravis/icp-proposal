@@ -1,8 +1,20 @@
 # A Closest Point Proposal for MCMC-based Probabilistic Surface Registration
 
-This repository contains all the code to reproduce our results from our recent publication:
-- Dennis Madsen, Andreas Morel-Forster, Patrick Kahr, Dana Rahbani, Thomas Vetter and Marcel Lüthi ["A Closest Point Proposal for MCMC-based Probabilistic Surface Registration"](https://arxiv.org/abs/1907.01414) 
-IN: arXiv preprint (2019)
+This repository contains all the code to reproduce our results from our recent ECCV2020 publication:
+- Dennis Madsen, Andreas Morel-Forster, Patrick Kahr, Dana Rahbani, Thomas Vetter and Marcel Lüthi ["A Closest Point Proposal for MCMC-based Probabilistic Surface Registration"](Pre-print https://arxiv.org/abs/1907.01414) 
+
+[Video presentation @ ECCV2020](https://www.youtube.com/watch?v=ge4LYNAVB2c)
+
+BibTex:
+```bibtex
+@InProceedings{Madsen_2020_ECCV,
+author = {Madsen, Dennis and Morel-Forster, Andreas and Kahr, Patrick and Rahbani, Dana and Vetter, Thomas and L{\"u}thi, Marcel},
+title = {A Closest Point Proposal for MCMC-based Probabilistic Surface Registratio},
+booktitle = {Proceedings of the European Conference on Computer Vision (ECCV)},
+month = {August},
+year = {2020}
+}
+```
 
 Markov Chain Monte Carlo for shape registration with examples using [Scalismo](https://github.com/unibas-gravis/scalismo).
 
@@ -53,6 +65,7 @@ The test face scans are available here: <https://faces.dmi.unibas.ch/bfm/main.ph
 - **Download the 3D face scans & renderings of ten individuals (94 MB)**.
 - Unpack the scans in the bfm/initial folder such that the .ply meshes are to be found under **data/bfm/initial/PublicMM1/03_scans_ply**.
 - Then run the **apps/bfm/AlignShapes** script to scale and align all faces to the face model as well as creating partial target meshes.
+- Then run the **apps/bfm/CreateGPModel** to create an analytically defined GPMM using the face template from the BFM.
 
 To run the face registration, run the script: **apps/bfm/BfmFitting**.
 As with the femur, the face registration can be replayed and the posterior can be visualised with the similar scripts found under **apps/bfm/**.

@@ -20,6 +20,9 @@ import java.awt.Color
 
 import api.sampling.ModelFittingParameters
 import api.sampling.loggers.{JSONAcceptRejectLogger, jsonLogFormat}
+import scalismo.geometry._3D
+import scalismo.mesh.TriangleMesh
+import scalismo.registration.Transformation
 import scalismo.ui.api.ScalismoUI
 import scalismo.utils.Random
 
@@ -30,7 +33,7 @@ object ReplayFittingFromLog {
   def main(args: Array[String]): Unit = {
     scalismo.initialize()
 
-    val (model, targetName, _, targetMesh, targetLogFile) = LoadTestData.modelAndTarget()
+    val (model, targetName, gt, targetMesh, targetLogFile) = LoadTestData.modelAndTarget(targetIndex = 1)
 
     val logObj = new JSONAcceptRejectLogger[ModelFittingParameters](targetLogFile)
     val logInit: IndexedSeq[jsonLogFormat] = logObj.loadLog()
@@ -40,6 +43,10 @@ object ReplayFittingFromLog {
     val modelGroup = ui.createGroup("model")
 
     ui.show(targetGroup, targetMesh, "target").color = Color.YELLOW
+    ui.show(targetGroup, gt, "gt").color = Color.ORANGE
+
+    val bestPars: ModelFittingParameters = logObj.getBestFittingParsFromJSON
+    val best: TriangleMesh[_3D] = ModelFittingParameters.transformedMesh(model, bestPars)
 
     val modelShow = ui.show(modelGroup, model, "model")
 
@@ -48,13 +55,16 @@ object ReplayFittingFromLog {
       else getLogIndex(i - 1)
     }
 
-    val firstIndexNotReject = logInit.filter(f => f.status).head.index
+    val firstIndexNotReject = math.max(0, logInit.filter(f => f.status).head.index)
 
-    val takeEveryN = 10
+    val takeEveryN = 30
+
+    ui.show(ui.createGroup("best"), best, "best")
 
     println(s"takeEvery: $takeEveryN total log : " + logInit.length)
     Thread.sleep(3000)
-    for (cnt <- firstIndexNotReject until logInit.length by takeEveryN) yield {
+    val sampleGroup = ui.createGroup("samples")
+    for (cnt <- firstIndexNotReject until 700 by takeEveryN) yield {
       val index = getLogIndex(cnt)
       println(s"Index from Markov-Chain: $cnt, Index closest accepted sample: $index")
       val js = logInit(index)
@@ -62,6 +72,8 @@ object ReplayFittingFromLog {
       val rigidTrans = ModelFittingParameters.poseTransform(pars)
       modelShow.shapeModelTransformationView.poseTransformationView.transformation = rigidTrans
       modelShow.shapeModelTransformationView.shapeTransformationView.coefficients = pars.shapeParameters.parameters
+      val sample = model.instance(pars.shapeParameters.parameters).transform(rigidTrans)
+      ui.show(sampleGroup, sample, cnt.toString)
       Thread.sleep(100)
     }
   }

@@ -30,8 +30,9 @@ object LoadTestData {
 
   def modelAndTarget(targetIndex: Int = 0): (StatisticalMeshModel, String, TriangleMesh[_3D], TriangleMesh[_3D], File) = {
 
-    val modelFile = new File(generalPath, "model2017-1_face12_nomouth.h5")
-    val model = StatismoIO.readStatismoMeshModel(modelFile, "shape").get.truncate(50)
+    val modelFile = new File(generalPath, "faceGPmodel_200c.h5")
+    val model = StatismoIO.readStatismoMeshModel(modelFile).get
+
     println(s"Model file to be used: $modelFile")
 
     val alignedPath = new File(generalPath, "aligned")

@@ -55,7 +55,7 @@ object IcpRegistration {
     val (model, modelLms, targetMesh, targetLms) = LoadTestData.modelAndTarget()
 
     val numOfEvaluatorPoints = model.referenceMesh.pointSet.numberOfPoints // Used for the evaluation
-    val numOfIterations = 1000 // Number of ICP iterations
+    val numOfIterations = 100 // Number of ICP iterations
 
     val ui = ScalismoUI(s"MH-ICP-proposal-registration")
     val modelGroup = ui.createGroup("modelGroup")

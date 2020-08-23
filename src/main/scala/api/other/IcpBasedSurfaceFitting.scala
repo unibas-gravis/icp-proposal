@@ -90,7 +90,18 @@ case class IcpBasedSurfaceFitting(model: StatisticalMeshModel, target: TriangleM
       }
 
       if (nbIterations > 0) {
-        recursion(newCoeff, nbIterations - 1, sigma, finalTrans)
+        try
+        {
+          recursion(newCoeff, nbIterations - 1, sigma, finalTrans)
+        }
+        catch
+        {
+          case e: Exception => {
+            println(s"Some error occured in IcpBasedSurfaceFITTING!!! Iteration: ${numIterations - nbIterations}) / ${numIterations}")
+            println(e)
+            (newCoeff, finalTrans)
+          }
+        }
       }
       else {
         (newCoeff, finalTrans)
