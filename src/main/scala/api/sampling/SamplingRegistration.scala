@@ -26,7 +26,6 @@ import scalismo.geometry._
 import scalismo.mesh.TriangleMesh3D
 import scalismo.sampling.DistributionEvaluator
 import scalismo.sampling.algorithms.MetropolisHastings
-import scalismo.sampling.evaluators.ProductEvaluator
 import scalismo.sampling.loggers.{BestSampleLogger, ChainStateLoggerContainer}
 import scalismo.sampling.proposals.MixtureProposal
 import scalismo.statisticalmodel.StatisticalMeshModel

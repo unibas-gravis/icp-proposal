@@ -21,8 +21,8 @@ import java.io.File
 import apps.bfm.Paths.generalPath
 import scalismo.common.ScalarArray
 import scalismo.geometry._
-import scalismo.io.{MeshIO, StatismoIO}
-import scalismo.mesh.{ScalarMeshField, TriangleMesh3D}
+import scalismo.io.StatismoIO
+import scalismo.mesh.ScalarMeshField
 import scalismo.numerics.UniformMeshSampler3D
 import scalismo.statisticalmodel.{GaussianProcess, LowRankGaussianProcess, StatisticalMeshModel}
 import scalismo.ui.api.ScalismoUI

@@ -23,16 +23,12 @@ import api.sampling._
 import api.sampling.evaluators.SymmetricEvaluation
 import apps.femur.Paths.{dataFemurPath, generalPath}
 import apps.util.FileUtils
-import breeze.linalg.{DenseMatrix, DenseVector}
 import scalismo.geometry._
 import scalismo.io.{MeshIO, StatismoIO}
-import scalismo.statisticalmodel.MultivariateNormalDistribution
-import scalismo.utils.Random.implicits._
-
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-
+import scalismo.utils.Random.implicits._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object RunMHRandomInitComparison {
 

@@ -19,11 +19,10 @@ package apps.bfm
 import java.awt.Color
 import java.io.File
 
-import api.other.{ModelAndTargetSampling, ModelSampling, RegistrationComparison}
+import api.other.{ModelAndTargetSampling, RegistrationComparison}
 import api.sampling.{MixedProposalDistributions, ModelFittingParameters, ProductEvaluators, SamplingRegistration}
-import api.sampling.evaluators.{ModelToTargetEvaluation, SymmetricEvaluation}
-import scalismo.io.StatismoIO
-import scalismo.ui.api.{ScalismoUI, ScalismoUIHeadless}
+import api.sampling.evaluators.ModelToTargetEvaluation
+import scalismo.ui.api.ScalismoUI
 import Paths.generalPath
 
 import scala.collection.parallel.ForkJoinTaskSupport

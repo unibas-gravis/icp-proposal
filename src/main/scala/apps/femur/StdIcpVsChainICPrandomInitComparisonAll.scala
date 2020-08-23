@@ -23,8 +23,8 @@ import api.other.ModelAndTargetSampling
 import api.sampling._
 import api.sampling.evaluators.ModelToTargetEvaluation
 import api.sampling.loggers.JSONExperimentLogger
-import apps.femur.Paths.dataFemurPath
-import apps.femur.RandomSamplesFromModelForTest.InitialiseShapeParameters
+import apps.femur.Paths.{dataFemurPath, generalPath}
+import apps.femur.RandomSamplesFromModel.InitialiseShapeParameters
 import apps.util.FileUtils
 import breeze.linalg.{DenseMatrix, DenseVector}
 import scalismo.geometry._
@@ -82,13 +82,14 @@ object StdIcpVsChainICPrandomInitComparisonAll {
 
     val normalNoise = 3.0
     val logPath = new File(dataFemurPath, "log/paper_base_200_experiment/")
+    logPath.mkdir()
 
     val modelFile = new File(dataFemurPath, "femur_gp_model_200-components.h5")
     val model = StatismoIO.readStatismoMeshModel(modelFile).get
 
     val subPath = "aligned"
 
-    val targetMeshes = new File(dataFemurPath, s"$subPath/meshes/").listFiles().filter(f => f.getName.endsWith(".stl")).sorted
+    val targetMeshes = new File(generalPath, s"$subPath/meshes/").listFiles().filter(f => f.getName.endsWith(".stl")).sorted
 
     val experimentFile = new File(logPath, "experiments.json")
     val experimentLogger: JSONExperimentLogger = JSONExperimentLogger(experimentFile, modelFile.toString)

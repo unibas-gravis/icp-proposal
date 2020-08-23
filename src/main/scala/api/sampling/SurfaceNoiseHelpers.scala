@@ -18,7 +18,7 @@ package api.sampling
 
 import breeze.linalg.DenseVector
 import scalismo.geometry._
-import scalismo.statisticalmodel.{MultivariateNormalDistribution}
+import scalismo.statisticalmodel.MultivariateNormalDistribution
 
 object SurfaceNoiseHelpers {
 

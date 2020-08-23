@@ -19,13 +19,11 @@ package apps.femur
 import java.awt.Color
 import java.io.File
 
-import api.other.{ModelAndTargetSampling, RegistrationComparison, TargetSampling}
+import api.other.{ModelAndTargetSampling, RegistrationComparison}
 import api.sampling._
-import api.sampling.evaluators.{SymmetricEvaluation, TargetToModelEvaluation}
+import api.sampling.evaluators.SymmetricEvaluation
 import apps.femur.Paths.dataFemurPath
-import apps.femur.RandomSamplesFromModelForTest.InitialiseShapeParameters
-import scalismo.geometry.{EuclideanVector, EuclideanVector3D, _3D}
-import scalismo.io.{MeshIO, StatismoIO}
+import scalismo.geometry._3D
 import scalismo.mesh.{TriangleMesh, TriangleMesh3D}
 import scalismo.sampling.DistributionEvaluator
 import scalismo.sampling.proposals.MixtureProposal.ProposalGeneratorWithTransition

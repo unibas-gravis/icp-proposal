@@ -22,7 +22,6 @@ import api.sampling.ModelFittingParameters
 import api.sampling.loggers.{JSONAcceptRejectLogger, jsonLogFormat}
 import scalismo.geometry._3D
 import scalismo.mesh.TriangleMesh
-import scalismo.registration.Transformation
 import scalismo.ui.api.ScalismoUI
 import scalismo.utils.Random
 
