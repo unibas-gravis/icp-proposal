@@ -23,3 +23,8 @@ project/target/
 target/
 .scala_dependencies
 .worksheet
+data/bfm/initial/PublicMM1/*
+data/bfm/aligned/*
+data/bfm/partial/*
+data/bfm/*.h5
+data/femur/SMIR/*

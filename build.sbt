@@ -12,8 +12,8 @@ resolvers += Resolver.bintrayRepo("unibas-gravis", "maven")
 
 
 libraryDependencies ++= Seq(
-  "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.13.0",
-  "ch.unibas.cs.gravis" %% "scalismo-faces" % "0.9.0",
+  "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.14.0",
+  "ch.unibas.cs.gravis" %% "scalismo-faces" % "0.10.1",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
 ).map(_.force())

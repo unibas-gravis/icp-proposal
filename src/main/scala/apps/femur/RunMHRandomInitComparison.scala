@@ -21,38 +21,24 @@ import java.io.File
 import api.other.ModelSampling
 import api.sampling._
 import api.sampling.evaluators.SymmetricEvaluation
-import apps.femur.Paths.generalPath
+import apps.femur.Paths.{dataFemurPath, generalPath}
 import apps.util.FileUtils
-import breeze.linalg.{DenseMatrix, DenseVector}
 import scalismo.geometry._
 import scalismo.io.{MeshIO, StatismoIO}
-import scalismo.statisticalmodel.MultivariateNormalDistribution
-import scalismo.utils.Random.implicits._
-
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-
+import scalismo.utils.Random.implicits._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object RunMHRandomInitComparison {
-
-  def InitialiseShapeParameters(rank: Int, index: Int, variance: Double = 0.1): ShapeParameters = {
-    val perturbationDistribution = new MultivariateNormalDistribution(DenseVector.zeros(rank), DenseMatrix.eye[Double](rank) * variance)
-    if (index == 0) {
-      ShapeParameters(DenseVector.zeros[Double](rank))
-    }
-    else {
-      ShapeParameters(perturbationDistribution.sample())
-    }
-  }
 
   def main(args: Array[String]) {
     scalismo.initialize()
     println(s"Starting Metropolis Hastings registrations with random initialization of shape parameters!")
 
-    val logPath = new File(generalPath, "log")
+    val logPath = new File(dataFemurPath, "log")
 
-    val modelFile = new File(generalPath, "femur_gp_model_50-components.h5")
+    val modelFile = new File(dataFemurPath, "femur_gp_model_50-components.h5")
     val model = StatismoIO.readStatismoMeshModel(modelFile).get
     println(s"Model file to be used: $modelFile")
 
@@ -66,7 +52,7 @@ object RunMHRandomInitComparison {
 
     val numOfEvaluatorPoints = model.referenceMesh.pointSet.numberOfPoints // Used for the likelihood evaluator
     val numOfICPPointSamples = numOfEvaluatorPoints // Used for the ICP proposal
-    val numOfICPSamples = 10000 // Length of Markov Chain
+    val numOfICPSamples = 1000 // Length of Markov Chain
     val numOfRNDSamples = numOfICPSamples * 5 // Length of Markov Chain
 
     val proposalIcp = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelSampling)
@@ -81,7 +67,9 @@ object RunMHRandomInitComparison {
 
       val rotatCenter: EuclideanVector[_3D] = model.referenceMesh.pointSet.points.map(_.toVector).reduce(_ + _) * 1.0 / model.referenceMesh.pointSet.numberOfPoints.toDouble
       val initPoseParameters = PoseParameters(EuclideanVector3D(0, 0, 0), (0, 0, 0), rotationCenter = rotatCenter.toPoint)
-      val initShapeParameters = InitialiseShapeParameters(model.rank, i)
+      val initShape = MeshIO.readMesh(new File(dataFemurPath, "modelsamples").listFiles().find(f => f.getName == s"${i}.stl").get).get
+//      val initShapeParameters = InitialiseShapeParameters(model.rank, i)
+      val initShapeParameters = ShapeParameters(model.coefficients(initShape))
 
       val initialParametersRandom = ModelFittingParameters(initPoseParameters, initShapeParameters)
 

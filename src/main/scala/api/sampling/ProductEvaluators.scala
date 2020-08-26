@@ -17,14 +17,10 @@
 package api.sampling
 
 import api.sampling.evaluators._
-import breeze.linalg.{DenseMatrix, DenseVector}
-import scalismo.common.PointId
-import scalismo.geometry.{Point, _3D}
 import scalismo.mesh.TriangleMesh3D
-import scalismo.numerics.UniformMeshSampler3D
 import scalismo.sampling.DistributionEvaluator
 import scalismo.sampling.evaluators.ProductEvaluator
-import scalismo.statisticalmodel.{MultivariateNormalDistribution, StatisticalMeshModel}
+import scalismo.statisticalmodel.StatisticalMeshModel
 import scalismo.utils.Random.implicits._
 
 object ProductEvaluators {

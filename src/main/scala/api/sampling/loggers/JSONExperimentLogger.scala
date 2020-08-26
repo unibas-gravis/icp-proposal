@@ -24,6 +24,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.collection.mutable.ListBuffer
+import scala.io.Source
 
 case class jsonExperimentFormat(index: Int, modelPath: String, targetPath: String, samplingEuclideanLoggerPath: String, samplingHausdorffLoggerPath: String, coeffInit: Seq[Double], coeffSamplingEuclidean: Seq[Double], coeffSamplingHausdorff: Seq[Double], coeffIcp: Seq[Double],
                                 samplingEuclidean: Map[String, Double], samplingHausdorff: Map[String, Double], icp: Map[String, Double], numOfEvaluationPoints: Int, numOfSamplePoints: Int, normalNoise: Double, datetime: String, comment: String)
@@ -76,6 +77,11 @@ case class JSONExperimentLogger(filePath: File, modelPath: String = "") {
       case e: Exception => throw new IOException("Writing JSON log file failed!")
     }
     println("Log written to: " + filePath.toString)
+  }
+
+  def loadLog(): IndexedSeq[jsonExperimentFormat] = {
+    println(s"Loading JSON log file: ${filePath.toString}")
+    Source.fromFile(filePath.toString).mkString.parseJson.convertTo[IndexedSeq[jsonExperimentFormat]]
   }
 }
 

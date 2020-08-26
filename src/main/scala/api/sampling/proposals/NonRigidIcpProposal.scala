@@ -69,28 +69,19 @@ case class NonRigidIcpProposal(
   }
 
 
-  private def randomStepLength(theta: ModelFittingParameters): Double = {
-    1 - scala.util.Random.nextDouble() * 2.0
-  }
-
-
   override def logTransitionProbability(from: ModelFittingParameters, to: ModelFittingParameters): Double = {
     val posterior = cashedPosterior(from)
-
     val compensatedTo = to.copy(shapeParameters = ShapeParameters(from.shapeParameters.parameters + (to.shapeParameters.parameters - from.shapeParameters.parameters) / stepLength))
-
     val pdf = posterior.logpdf(compensatedTo.shapeParameters.parameters)
     pdf
   }
+
 
   private def icpPosterior(theta: ModelFittingParameters): LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = {
     def modelBasedClosestPointsEstimation(
                                            currentMesh: TriangleMesh[_3D],
                                            inversePoseTransform: RigidTransformation[_3D]
                                          ): IndexedSeq[(Point[_3D], EuclideanVector[_3D], MultivariateNormalDistribution)] = {
-
-      //      val modelPoints = UniformMeshSampler3D(model.referenceMesh, numOfSamplePoints).sample().map(_._1)
-      //      val modelIds: IndexedSeq[PointId] = modelPoints.map(p => model.referenceMesh.pointSet.findClosestPoint(p).id)
 
       val noisyCorrespondence = modelIds.map {
         id =>
@@ -110,13 +101,10 @@ case class NonRigidIcpProposal(
       }
     }
 
-
     def targetBasedClosestPointsEstimation(
                                             currentMesh: TriangleMesh[_3D],
                                             inversePoseTransform: RigidTransformation[_3D]
                                           ): IndexedSeq[(Point[_3D], EuclideanVector[_3D], MultivariateNormalDistribution)] = {
-
-      //      val targetPoints: Seq[Point[_3D]] = UniformMeshSampler3D(target, numOfSamplePoints).sample().map(_._1).toIndexedSeq
 
       val noisyCorrespondence = targetPoints.map { targetPoint =>
         val id = currentMesh.pointSet.findClosestPoint(targetPoint).id

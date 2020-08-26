@@ -16,7 +16,8 @@
 
 package api.other
 
-import scalismo.mesh.{MeshMetrics, TriangleMesh3D}
+import scalismo.geometry._3D
+import scalismo.mesh.{MeshMetrics, TriangleMesh, TriangleMesh3D}
 
 object RegistrationComparison {
 
@@ -26,4 +27,25 @@ object RegistrationComparison {
     val hausdorffDistance = MeshMetrics.hausdorffDistance(reconstruction, groundTruth)
     println(s"ID: ${id} average2surface: ${avgDist2Surf} hausdorff: ${hausdorffDistance}")
   }
+
+  private def avgDistanceBoundaryAware(m1: TriangleMesh[_3D], m2: TriangleMesh[_3D]): (Double, Double) = {
+
+    val pointsOnSample = m1.pointSet.points
+    val dists = for (p <- pointsOnSample) yield {
+      val pTarget = m2.operations.closestPointOnSurface(p).point
+      val pTargetId = m2.pointSet.findClosestPoint(pTarget).id
+      if (m2.operations.pointIsOnBoundary(pTargetId)) None
+      else Option((pTarget - p).norm)
+    }
+    val filteredDists = dists.toIndexedSeq.filter(f => f.nonEmpty).flatten
+    (filteredDists.sum / filteredDists.size, filteredDists.max)
+  }
+
+
+  def evaluateReconstruction2GroundTruthBoundaryAware(id: String, reconstruction: TriangleMesh3D, groundTruth: TriangleMesh3D): Unit = {
+    val (avgDist2Surf, maxDist2Surf) = avgDistanceBoundaryAware(reconstruction, groundTruth)
+
+    println(s"ID: ${id} average2surface: ${avgDist2Surf} max: ${maxDist2Surf}")
+  }
+
 }

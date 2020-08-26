@@ -26,7 +26,6 @@ import scalismo.geometry._
 import scalismo.mesh.TriangleMesh3D
 import scalismo.sampling.DistributionEvaluator
 import scalismo.sampling.algorithms.MetropolisHastings
-import scalismo.sampling.evaluators.ProductEvaluator
 import scalismo.sampling.loggers.{BestSampleLogger, ChainStateLoggerContainer}
 import scalismo.sampling.proposals.MixtureProposal
 import scalismo.statisticalmodel.StatisticalMeshModel
@@ -60,11 +59,10 @@ class SamplingRegistration(model: StatisticalMeshModel, sample: TriangleMesh3D, 
 
     val samplingIterator = for ((theta, i) <- mhIt.zipWithIndex) yield {
       if (i % modelUiUpdateInterval == 0 && i != 0) {
-        logger.debug(" index: " + i + " LOG: " + bestSamplelogger.currentBestValue().get)
+        logger.debug(" index: " + i + " LOG: " + bestSamplelogger.currentBestValue().getOrElse(theta))
         if (modelUi.isDefined) {
           val thetaToUse = if (acceptRejectLogger.logSamples.nonEmpty) {
             acceptRejectLogger.logSamples.last // Get last accepted sample
-            //            bestSamplelogger.currentBestSample().get  // Get overall best sample
           }
           else {
             theta
@@ -77,10 +75,10 @@ class SamplingRegistration(model: StatisticalMeshModel, sample: TriangleMesh3D, 
       if (i % acceptInfoPrintInterval == 0 && i != 0) {
         acceptRejectLogger.writeLog()
         acceptRejectLogger.printAcceptInfo(jsonName.getName)
-        val bestTheta = bestSamplelogger.currentBestSample().get
+        val bestTheta = bestSamplelogger.currentBestSample().getOrElse(theta)
         val rigidTrans = ModelFittingParameters.poseTransform(bestTheta)
         val bestStuff = model.instance(bestTheta.shapeParameters.parameters).transform(rigidTrans)
-        RegistrationComparison.evaluateReconstruction2GroundTruth("Sampling", sample, bestStuff)
+        RegistrationComparison.evaluateReconstruction2GroundTruthBoundaryAware("Sampling", bestStuff, sample)
       }
       theta
     }

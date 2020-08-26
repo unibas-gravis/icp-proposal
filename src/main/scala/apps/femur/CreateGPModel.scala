@@ -58,7 +58,7 @@ object CreateGPModel {
 
     val ui = ScalismoUI()
 
-    Seq(50, 100).foreach { i =>
+    Seq(50, 100, 200).foreach { i =>
       val referenceMesh = MeshIO.readMesh(new File(dataFemurPath, "femur_reference.stl")).get
 
       val outputModelFile = new File(dataFemurPath, s"femur_gp_model_$i-components.h5")
@@ -89,10 +89,10 @@ object CreateGPModel {
       val totalVariance = approxTotalVariance(gp, referenceMesh)
       println("total variance  " + totalVariance)
 
-      val numOfSamplePoints = i
+      val numOfSamplePoints = math.min(i*2, referenceMesh.pointSet.numberOfPoints)
       println(s"num of sampled points: $numOfSamplePoints")
       val sampler = UniformMeshSampler3D(referenceMesh, numberOfPoints = numOfSamplePoints)
-      val lowRankGP = LowRankGaussianProcess.approximateGPNystrom(gp, sampler, numBasisFunctions = i + 1)
+      val lowRankGP: LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = LowRankGaussianProcess.approximateGPNystrom(gp, sampler, numBasisFunctions = i + 1)
 
       val approximatedVar = lowRankGP.klBasis.map(_.eigenvalue).sum
       println(s"Ratio of approximated variance " + approximatedVar / totalVariance)

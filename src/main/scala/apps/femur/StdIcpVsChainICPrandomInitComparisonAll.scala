@@ -23,7 +23,8 @@ import api.other.ModelAndTargetSampling
 import api.sampling._
 import api.sampling.evaluators.ModelToTargetEvaluation
 import api.sampling.loggers.JSONExperimentLogger
-import apps.femur.Paths.generalPath
+import apps.femur.Paths.{dataFemurPath, generalPath}
+import apps.femur.RandomSamplesFromModel.InitialiseShapeParameters
 import apps.util.FileUtils
 import breeze.linalg.{DenseMatrix, DenseVector}
 import scalismo.geometry._
@@ -38,7 +39,7 @@ import scala.collection.parallel.ForkJoinTaskSupport
 object StdIcpVsChainICPrandomInitComparisonAll {
 
   def appendExperiment(model: StatisticalMeshModel, log: JSONExperimentLogger, index: Int, target: TriangleMesh3D, bestSampleEuclidean: TriangleMesh3D, bestSampleHausdorff: TriangleMesh3D, bestIcp: TriangleMesh3D, targetPath: String, samplingEuclideanLoggerPath: String, samplingHausdorffLoggerPath: String, coeffInit: DenseVector[Double], numOfEvaluationPoints: Int, numOfSamplePoints: Int, normalNoise: Double, comment: String): Unit = {
-    def distMeasure(best: TriangleMesh3D) = {
+    def distMeasure(best: TriangleMesh3D): Map[String, Double] = {
       val avgDist = MeshMetrics.avgDistance(best, target)
       val hausDist = MeshMetrics.hausdorffDistance(best, target)
       val diceCoeff = MeshMetrics.diceCoefficient(best, target)
@@ -79,30 +80,33 @@ object StdIcpVsChainICPrandomInitComparisonAll {
 
     println("Running ICP vs Sampling experiment (Euclidean and Hausdorff)")
 
-    val normalNoise = 6.0
-    val logPath = new File(generalPath, "log")
+    val normalNoise = 3.0
+    val logPath = new File(dataFemurPath, "log/paper_base_200_experiment/")
+    logPath.mkdir()
 
-    val modelFile = new File(generalPath, "femur_gp_model_50-components.h5")
+    val modelFile = new File(dataFemurPath, "femur_gp_model_200-components.h5")
     val model = StatismoIO.readStatismoMeshModel(modelFile).get
 
     val subPath = "aligned"
 
     val targetMeshes = new File(generalPath, s"$subPath/meshes/").listFiles().filter(f => f.getName.endsWith(".stl")).sorted
 
-    val experimentFile = new File(logPath, "experiment.json")
+    val experimentFile = new File(logPath, "experiments.json")
     val experimentLogger: JSONExperimentLogger = JSONExperimentLogger(experimentFile, modelFile.toString)
 
-    val numOfICPpointSamples = model.referenceMesh.pointSet.numberOfPoints // Used for the ICP proposal
-    val numOfEvalPoints = numOfICPpointSamples // Used for the likelihood evaluator
+    println(s"Experiment file: ${experimentFile}")
+
+    val numOfEvalPoints = model.referenceMesh.pointSet.numberOfPoints/2 // Used for the likelihood evaluator
+    val numOfICPpointSamples = model.rank*2 // Used for the ICP proposal
 
     println("Target names:")
     targetMeshes.foreach(println(_))
 
-    val numOfConcurrentExecutions = 5 // Number of maximum parallel executions
-    val loop = targetMeshes.zipWithIndex.par
-    loop.tasksupport = new ForkJoinTaskSupport(new java.util.concurrent.ForkJoinPool(numOfConcurrentExecutions))
+    val numOfConcurrentExecutionsOuter = 10 // Number of maximum parallel executions
+    val outerLoop = targetMeshes.par.zipWithIndex
+    outerLoop.tasksupport = new ForkJoinTaskSupport(new java.util.concurrent.ForkJoinPool(numOfConcurrentExecutionsOuter))
 
-    loop.foreach { case (targetMeshFile, _) =>
+    outerLoop.foreach { case (targetMeshFile, _) =>
       println(s"Working with targetMesh: ${targetMeshFile.toString}")
       val targetMesh = MeshIO.readMesh(targetMeshFile).get
 
@@ -110,16 +114,25 @@ object StdIcpVsChainICPrandomInitComparisonAll {
       val targetname = FileUtils.basename(targetMeshFile)
 
 
-      (0 to 100).foreach { case (i) =>
+      val numOfConcurrentExecutionsInner = 1 // Number of maximum parallel executions
+      val innerLoop = (0 until 100).par
+      innerLoop.tasksupport = new ForkJoinTaskSupport(new java.util.concurrent.ForkJoinPool(numOfConcurrentExecutionsInner))
+
+      innerLoop.foreach { case (i) =>
         println(s"Starting fitting with random initialization of shape parameters: $i")
 
-        val proposalIcp = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPpointSamples, projectionDirection = ModelAndTargetSampling)
+        val proposalIcp = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPpointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 100.0, noiseAlongNormal = normalNoise, stepLength = 0.1, boundaryAware = true)
 
-        val initPars: ModelFittingParameters = randomInitPars(model, i)
+        val rotatCenter: EuclideanVector[_3D] = model.referenceMesh.pointSet.points.map(_.toVector).reduce(_ + _) * 1.0 / model.referenceMesh.pointSet.numberOfPoints.toDouble
+        val initPoseParameters = PoseParameters(EuclideanVector3D(0, 0, 0), (0, 0, 0), rotationCenter = rotatCenter.toPoint)
 
-        //        val ui = ScalismoUI(s"ICPvsMH-registration_{i}")
+        val initShape = MeshIO.readMesh(new File(dataFemurPath, "modelsamples").listFiles().find(f => f.getName == s"${i}.stl").get).get
+        val initShapeParameters = InitialiseShapeParameters(model.rank, i)
+
+        val initPars = ModelFittingParameters(initPoseParameters, initShapeParameters)
+
         val ui = ScalismoUIHeadless() // ScalismoUI()
-      val modelGroup = ui.createGroup("modelGroup")
+        val modelGroup = ui.createGroup("modelGroup")
         val targetGroup = ui.createGroup("targetGroup")
         val finalGroup = ui.createGroup("finalGroup")
 
@@ -130,13 +143,13 @@ object StdIcpVsChainICPrandomInitComparisonAll {
         val showTarget = ui.show(targetGroup, targetMesh, "target")
         showTarget.color = Color.YELLOW
 
-        val bestDeterministicRegistration = IcpRegistration.fitting(model, targetMesh, model.referenceMesh.pointSet.numberOfPoints, 50, Option(showModel), initialParameters = Option(initPars))
+        val bestDeterministicRegistration = IcpRegistration.fitting(model, targetMesh, model.referenceMesh.pointSet.numberOfPoints, 100, Option(showModel), initialParameters = Option(initPars))
         ui.show(finalGroup, bestDeterministicRegistration, "ICP_best")
 
         val evaluatorEuclidean = ProductEvaluators.proximityAndIndependent(model, targetMesh, ModelToTargetEvaluation, uncertainty = 1.0, numberOfEvaluationPoints = numOfEvalPoints)
         val evaluatorHausdorff = ProductEvaluators.proximityAndHausdorff(model, targetMesh, uncertainty = 100.0)
 
-        val numOfSamples = 1000
+        val numOfSamples = 10000
 
         val samplingLoggerPathEuclidean = new File(logPath, s"ICPComparisonEuclidean-$normalNoise-$basename-$targetname-samples-$numOfSamples-$i-index.json")
         val bestSamplingRegistrationEuclidean = IcpProposalRegistration.fitting(model, targetMesh, evaluatorEuclidean, proposalIcp, numOfSamples, Option(showModel), samplingLoggerPathEuclidean, initialParameters = Option(initPars))

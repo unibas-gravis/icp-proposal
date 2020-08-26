@@ -16,6 +16,7 @@
 
 package apps.femur
 
+import java.awt.Color
 import java.io.File
 
 import api.sampling.ModelFittingParameters
@@ -31,7 +32,7 @@ object PosteriorVariabilityToMeshColor {
 
     val logPath = new File(dataFemurPath, "log")
 
-    val (model, _, _, _) = LoadTestData.modelAndTarget()
+    val (model, _, targetMesh, _) = LoadTestData.modelAndTarget()
 
     val jsonFileName = "icpProposalRegistration.json"
 
@@ -39,7 +40,7 @@ object PosteriorVariabilityToMeshColor {
 
     val logObj = new JSONAcceptRejectLogger[ModelFittingParameters](new File(logPath, jsonFileName))
     val logInit: IndexedSeq[jsonLogFormat] = logObj.loadLog()
-    val burnInPhase = 1000
+    val burnInPhase = 300
 
     val logSamples = LogHelper.samplesFromLog(logInit, takeEveryN = 50, total = 10000, burnInPhase)
     println(s"Number of samples from log: ${logSamples.length}/${logInit.length - burnInPhase}")
@@ -52,9 +53,11 @@ object PosteriorVariabilityToMeshColor {
 
     val ui = ScalismoUI(s"Posterior visualization - $jsonFileName")
     val modelGroup = ui.createGroup("model")
+    val targetGroup = ui.createGroup("targetGroup")
     val colorGroup = ui.createGroup("color")
     val showModel = ui.show(modelGroup, model, "model")
     showModel.meshView.opacity = 0.0
+    ui.show(targetGroup, targetMesh, "target").color = Color.YELLOW
     ui.show(colorGroup, colorMap_posteriorEstimate, "posterior")
     ui.show(colorGroup, colorMap_normalVariance, "normal")
     ui.show(colorGroup, best, "best-fit")

@@ -90,7 +90,18 @@ case class IcpBasedSurfaceFitting(model: StatisticalMeshModel, target: TriangleM
       }
 
       if (nbIterations > 0) {
-        recursion(newCoeff, nbIterations - 1, sigma, finalTrans)
+        try
+        {
+          recursion(newCoeff, nbIterations - 1, sigma, finalTrans)
+        }
+        catch
+        {
+          case e: Exception => {
+            System.err.println(s"An error occured in IcpBasedSurfaceFitting, iteration: ${numIterations - nbIterations}) / ${numIterations}")
+            System.err.println(e)
+            (newCoeff, finalTrans)
+          }
+        }
       }
       else {
         (newCoeff, finalTrans)

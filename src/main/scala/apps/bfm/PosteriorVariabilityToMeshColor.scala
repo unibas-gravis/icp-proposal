@@ -27,13 +27,13 @@ object PosteriorVariabilityToMeshColor {
     scalismo.initialize()
 
 
-    val (model, targetName, _, _, targetLogFile) = LoadTestData.modelAndTarget()
+    val (model, targetName, _, _, targetLogFile) = LoadTestData.modelAndTarget(1)
 
     val logObj = new JSONAcceptRejectLogger[ModelFittingParameters](targetLogFile)
     val logInit: IndexedSeq[jsonLogFormat] = logObj.loadLog()
-    val burnInPhase = 1000
+    val burnInPhase = 100
 
-    val logSamples = LogHelper.samplesFromLog(logInit, takeEveryN = 50, total = 10000, burnInPhase)
+    val logSamples = LogHelper.samplesFromLog(logInit, takeEveryN = 20, total = 100000, burnInPhase)
     println(s"Number of samples from log: ${logSamples.length}/${logInit.length - burnInPhase}")
     val logShapes = LogHelper.logSamples2shapes(model, logSamples.map(_._1))
 
@@ -50,5 +50,7 @@ object PosteriorVariabilityToMeshColor {
     ui.show(colorGroup, colorMap_posteriorEstimate, "posterior")
     ui.show(colorGroup, colorMap_normalVariance, "normal")
     ui.show(colorGroup, best, "best-fit")
+    val rndGroup = ui.createGroup("random")
+    scala.util.Random.shuffle(logShapes).take(10).zipWithIndex.foreach(m => ui.show(rndGroup, m._1, m._2.toString))
   }
 }
