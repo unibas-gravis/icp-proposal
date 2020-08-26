@@ -34,10 +34,10 @@ object RegistrationComparison {
     val dists = for (p <- pointsOnSample) yield {
       val pTarget = m2.operations.closestPointOnSurface(p).point
       val pTargetId = m2.pointSet.findClosestPoint(pTarget).id
-      if (m2.operations.pointIsOnBoundary(pTargetId)) -1.0
-      else (pTarget - p).norm
+      if (m2.operations.pointIsOnBoundary(pTargetId)) None
+      else Option((pTarget - p).norm)
     }
-    val filteredDists = dists.toIndexedSeq.filter(f => f > -1.0)
+    val filteredDists = dists.toIndexedSeq.filter(f => f.nonEmpty).flatten
     (filteredDists.sum / filteredDists.size, filteredDists.max)
   }
 

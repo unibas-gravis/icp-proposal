@@ -59,7 +59,7 @@ class SamplingRegistration(model: StatisticalMeshModel, sample: TriangleMesh3D, 
 
     val samplingIterator = for ((theta, i) <- mhIt.zipWithIndex) yield {
       if (i % modelUiUpdateInterval == 0 && i != 0) {
-        logger.debug(" index: " + i + " LOG: " + bestSamplelogger.currentBestValue().get)
+        logger.debug(" index: " + i + " LOG: " + bestSamplelogger.currentBestValue().getOrElse(theta))
         if (modelUi.isDefined) {
           val thetaToUse = if (acceptRejectLogger.logSamples.nonEmpty) {
             acceptRejectLogger.logSamples.last // Get last accepted sample
@@ -75,7 +75,7 @@ class SamplingRegistration(model: StatisticalMeshModel, sample: TriangleMesh3D, 
       if (i % acceptInfoPrintInterval == 0 && i != 0) {
         acceptRejectLogger.writeLog()
         acceptRejectLogger.printAcceptInfo(jsonName.getName)
-        val bestTheta = bestSamplelogger.currentBestSample().get
+        val bestTheta = bestSamplelogger.currentBestSample().getOrElse(theta)
         val rigidTrans = ModelFittingParameters.poseTransform(bestTheta)
         val bestStuff = model.instance(bestTheta.shapeParameters.parameters).transform(rigidTrans)
         RegistrationComparison.evaluateReconstruction2GroundTruthBoundaryAware("Sampling", bestStuff, sample)

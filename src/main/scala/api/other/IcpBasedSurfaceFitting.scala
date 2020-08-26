@@ -97,8 +97,8 @@ case class IcpBasedSurfaceFitting(model: StatisticalMeshModel, target: TriangleM
         catch
         {
           case e: Exception => {
-            println(s"Some error occured in IcpBasedSurfaceFITTING!!! Iteration: ${numIterations - nbIterations}) / ${numIterations}")
-            println(e)
+            System.err.println(s"An error occured in IcpBasedSurfaceFitting, iteration: ${numIterations - nbIterations}) / ${numIterations}")
+            System.err.println(e)
             (newCoeff, finalTrans)
           }
         }

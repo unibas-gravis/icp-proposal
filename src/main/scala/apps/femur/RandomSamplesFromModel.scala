@@ -26,11 +26,11 @@ object RandomSamplesFromModel {
   implicit val random: Random = Random(1024)
 
   def InitialiseShapeParameters(rank: Int, index: Int, variance: Double = 0.1): ShapeParameters = {
-    val perturbationDistr = new MultivariateNormalDistribution(DenseVector.zeros(rank), DenseMatrix.eye[Double](rank) * variance)
     if (index == 0) {
       ShapeParameters(DenseVector.zeros[Double](rank))
     }
     else {
+      val perturbationDistr = new MultivariateNormalDistribution(DenseVector.zeros(rank), DenseMatrix.eye[Double](rank) * variance)
       ShapeParameters(perturbationDistr.sample())
     }
   }

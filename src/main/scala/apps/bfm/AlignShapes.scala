@@ -95,8 +95,6 @@ object AlignShapes {
       LandmarkIO.writeLandmarksJson[_3D](partialLms, new File(partialLMsPath, lmName))
 
       val meshGroup = ui.createGroup(basename)
-//      ui.show(meshGroup, alignedMesh, basename)
-//      ui.show(meshGroup, alignedLms, "landmarks")
       ui.show(meshGroup, partialMesh, basename).opacity = 0.0
       ui.show(meshGroup, partialLms, "landmarks").foreach(_.opacity = 0.0)
     }

@@ -27,7 +27,6 @@ import scalismo.utils.Random
 object AlignShapes {
   implicit val random: Random = Random(1024)
 
-
   def main(args: Array[String]) {
     scalismo.initialize()
 

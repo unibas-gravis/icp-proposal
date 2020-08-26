@@ -57,21 +57,29 @@ object IcpProposalRegistration {
     val numOfICPPointSamples = model.rank*2 // Used for the ICP proposal
     val numOfSamples = 10000 // Length of Markov Chain
 
-    // Closest Point proposal
-    // projectionDirection = TargetSampling (if registering partial meshes)
-    val proposalIcp = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 100.0, noiseAlongNormal = 3.0, stepLength = 0.1)
-    // Random walk proposal
-//    val proposalRandom = MixedProposalDistributions.mixedProposalRandom(model)
+    /***** ***** ***** ***** ***** *****
+    * Closest Point proposal configuration
+    *  projectionDirection:
+    *  - TargetSampling (if registering partial meshes)
+    *  - ModelSampling (if registering noisy meshes)
+    *  - ModelAndTargetSampling (if registering clean complete meshes)
+    ***** ***** ***** ***** ***** *****/
+    val proposal = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 100.0, noiseAlongNormal = 3.0, stepLength = 0.1)
+    /* Uncomment below to use the standard "Random walk proposal" proposal */
+//    val proposal = MixedProposalDistributions.mixedProposalRandom(model)
 
-    val proposal = proposalIcp // proposalRandom
-
-    // Euclidean likelihood evaluator using a Gaussian distribution
-    // evaluationMode = TargetToModelEvaluation (if registering partial meshes)
-    val euclideanEvaluator = ProductEvaluators.proximityAndIndependent(model, targetMesh, evaluationMode = SymmetricEvaluation, uncertainty = 1.0, numberOfEvaluationPoints = numOfEvaluatorPoints)
-    // Hausdorff likelihood evaluator using an Exponential distribution
-//    val hausdorffEvaluator = ProductEvaluators.proximityAndHausdorff(model, targetMesh, uncertainty = 100.0)
-
-    val evaluator = euclideanEvaluator
+    /***** ***** ***** ***** ***** *****
+    * Choosing the likelihood function
+    *  - euclideanEvaluator (gaussian distribution): gives best L2 distance restults
+    *  - hausdorffEvaluator (exponential distribution): gives best hausdorff result
+    * evaluationMode:
+    *  - ModelToTargetEvaluation (if registering noisy meshes)
+    *  - TargetToModelEvaluation (if registering partial meshes)
+    *  - SymmetricEvaluation (if registering clean complete meshes)
+    ***** ***** ***** ***** ***** *****/
+    val evaluator = ProductEvaluators.proximityAndIndependent(model, targetMesh, evaluationMode = SymmetricEvaluation, uncertainty = 1.0, numberOfEvaluationPoints = numOfEvaluatorPoints)
+    /* Uncomment below to use the hausdorff likelihood function */
+//    val evaluator = ProductEvaluators.proximityAndHausdorff(model, targetMesh, uncertainty = 100.0)
 
     val ui = ScalismoUI(s"MH-ICP-proposal-registration")
     val modelGroup = ui.createGroup("modelGroup")

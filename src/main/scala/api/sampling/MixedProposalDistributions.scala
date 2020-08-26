@@ -29,12 +29,9 @@ object MixedProposalDistributions {
 
   def mixedProposalRandom(model: StatisticalMeshModel): ProposalGeneratorWithTransition[ModelFittingParameters] = {
     val mixproposal = MixtureProposal(
-//      0.5 *: RandomShapeUpdateProposal(model, 1.0, generatedBy = "RandomShape-1.0") +
         0.5 *: RandomShapeUpdateProposal(model, 0.1, generatedBy = "RandomShape-0.1") +
         0.5 *: RandomShapeUpdateProposal(model, 0.01, generatedBy = "RandomShape-0.01") +
-        0.5 *: RandomShapeUpdateProposal(model, 0.001, generatedBy = "RandomShape-0.001")// +
-//        0.5 *: RandomShapeUpdateProposal(model, 0.0001, generatedBy = "RandomShape-0.0001") +
-//        0.5 *: RandomShapeUpdateProposal(model, 0.00001, generatedBy = "RandomShape-0.00001")
+        0.5 *: RandomShapeUpdateProposal(model, 0.001, generatedBy = "RandomShape-0.001")
     )
     mixproposal
   }
