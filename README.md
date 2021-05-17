@@ -7,12 +7,13 @@ This repository contains all the code to reproduce our results from our recent E
 
 BibTex:
 ```bibtex
-@InProceedings{Madsen_2020_ECCV,
-author = {Madsen, Dennis and Morel-Forster, Andreas and Kahr, Patrick and Rahbani, Dana and Vetter, Thomas and L{\"u}thi, Marcel},
-title = {A Closest Point Proposal for MCMC-based Probabilistic Surface Registratio},
-booktitle = {Proceedings of the European Conference on Computer Vision (ECCV)},
-month = {August},
-year = {2020}
+@inproceedings{madsen2020closest,
+  title={A closest point proposal for MCMC-based probabilistic surface registration},
+  author={Madsen, Dennis and Morel-Forster, Andreas and Kahr, Patrick and Rahbani, Dana and Vetter, Thomas and Lüthi, Marcel},
+  booktitle={European Conference on Computer Vision},
+  pages={281--296},
+  year={2020},
+  organization={Springer}
 }
 ```
 
