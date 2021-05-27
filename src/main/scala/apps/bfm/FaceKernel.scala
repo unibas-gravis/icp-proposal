@@ -51,7 +51,7 @@ case class SpatiallyVaryingMultiscaleKernel(levelsWithScale : Seq[LevelWithScale
 
   override def outputDim = 3
 
-  override def domain = RealSpace[_3D]
+  override def domain = EuclideanSpace3D
 
 }
 
@@ -76,7 +76,7 @@ case class FaceKernel(faceMask : FaceMask, referenceMesh: TriangleMesh[_3D]) ext
 
   override protected def k(x: Point[_3D], y: Point[_3D]): DenseMatrix[Double] = faceKernel(x,y)
 
-  override def domain: Domain[_3D] = RealSpace[_3D]
+  override def domain: Domain[_3D] = EuclideanSpace3D
 
   override def outputDim: Int = 3
 

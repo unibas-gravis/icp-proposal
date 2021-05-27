@@ -18,13 +18,14 @@ package api.sampling.proposals
 
 import api.other.{IcpProjectionDirection, ModelSampling, TargetSampling}
 import api.sampling.{ModelFittingParameters, ShapeParameters, SurfaceNoiseHelpers}
-import scalismo.common.{Field, NearestNeighborInterpolator, PointId}
+import scalismo.common.interpolation.NearestNeighborInterpolator
+import scalismo.common.{Field, PointId}
 import scalismo.geometry._
 import scalismo.mesh.{TriangleMesh, TriangleMesh3D}
 import scalismo.numerics.UniformMeshSampler3D
-import scalismo.registration.RigidTransformation
 import scalismo.sampling.{ProposalGenerator, TransitionProbability}
 import scalismo.statisticalmodel.{LowRankGaussianProcess, MultivariateNormalDistribution, StatisticalMeshModel}
+import scalismo.transformations.RigidTransformation
 import scalismo.utils.Memoize
 
 case class NonRigidIcpProposal(

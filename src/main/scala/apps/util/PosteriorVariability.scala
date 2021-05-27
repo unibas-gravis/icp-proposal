@@ -16,9 +16,11 @@
 
 package apps.util
 
-import breeze.linalg.{DenseMatrix, DenseVector, sum, trace}
+import breeze.linalg.{DenseMatrix, DenseVector, trace}
+import scalismo.common.DiscreteField.ScalarMeshField
+import scalismo.common.ScalarMeshField
 import scalismo.geometry._3D
-import scalismo.mesh.{ScalarMeshField, TriangleMesh, TriangleMesh3D}
+import scalismo.mesh.{TriangleMesh, TriangleMesh3D}
 
 object PosteriorVariability {
   private val sampleDim = 3

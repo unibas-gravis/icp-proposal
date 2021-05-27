@@ -18,18 +18,20 @@ package api.other
 
 import breeze.linalg.DenseVector
 import com.typesafe.scalalogging.Logger
-import scalismo.common.{NearestNeighborInterpolator, PointId}
+import scalismo.common.PointId
+import scalismo.common.interpolation.NearestNeighborInterpolator
 import scalismo.geometry._
 import scalismo.mesh.TriangleMesh3D
 import scalismo.numerics.UniformMeshSampler3D
-import scalismo.registration.{GaussianProcessTransformationSpace, RigidTransformation, RigidTransformationSpace}
+import scalismo.registration.GaussianProcessTransformationSpace
 import scalismo.statisticalmodel.StatisticalMeshModel
+import scalismo.transformations.{TranslationAfterRotation, TranslationAfterRotationSpace3D}
 import scalismo.ui.api.StatisticalMeshModelViewControls
 import scalismo.utils.Random
 
 case class IcpBasedSurfaceFitting(model: StatisticalMeshModel, target: TriangleMesh3D, numOfSamplePoints: Int, stepLength: Double = 1.0, projectionDirection: IcpProjectionDirection, showModel: Option[StatisticalMeshModelViewControls] = None) {
   implicit val random: Random = Random(1024)
-  private val rigidIdentity = RigidTransformationSpace[_3D].transformForParameters(RigidTransformationSpace[_3D].identityTransformParameters)
+  private val rigidIdentity = TranslationAfterRotationSpace3D(rotationCenter = Point3D(0, 0, 0)).identityTransformation
 
   private val transformationSpace = GaussianProcessTransformationSpace[_3D](model.gp.interpolate(NearestNeighborInterpolator()))
   private val zeroParameters = (DenseVector.zeros[Double](model.rank), rigidIdentity)
@@ -41,7 +43,7 @@ case class IcpBasedSurfaceFitting(model: StatisticalMeshModel, target: TriangleM
   val logger: Logger = Logger("ICP-Logger")
 
 
-  def runfitting(numIterations: Int, iterationSeq: Seq[Double] = defIterations, initialModelParameters: Option[(DenseVector[Double], RigidTransformation[_3D])] = None): TriangleMesh3D = {
+  def runfitting(numIterations: Int, iterationSeq: Seq[Double] = defIterations, initialModelParameters: Option[(DenseVector[Double], TranslationAfterRotation[_3D])] = None): TriangleMesh3D = {
 
     val initialParameters = initialModelParameters.getOrElse(zeroParameters)
 
@@ -50,7 +52,7 @@ case class IcpBasedSurfaceFitting(model: StatisticalMeshModel, target: TriangleM
     val modelPointSamples = UniformMeshSampler3D(model.referenceMesh, numOfSamplePoints).sample.map(s => s._1)
     val pointIds = modelPointSamples.map { s => model.referenceMesh.pointSet.findClosestPoint(s).id }
 
-    def recursion(params: DenseVector[Double], nbIterations: Int, sigma: Double, currentTrans: RigidTransformation[_3D] = rigidIdentity): (DenseVector[Double], RigidTransformation[_3D]) = {
+    def recursion(params: DenseVector[Double], nbIterations: Int, sigma: Double, currentTrans: TranslationAfterRotation[_3D] = rigidIdentity): (DenseVector[Double], TranslationAfterRotation[_3D]) = {
       if ((numIterations - nbIterations) % 10 == 0) {
         logger.debug(s"Iteration: (${numIterations - nbIterations}) / ${numIterations}")
       }
@@ -90,12 +92,10 @@ case class IcpBasedSurfaceFitting(model: StatisticalMeshModel, target: TriangleM
       }
 
       if (nbIterations > 0) {
-        try
-        {
+        try {
           recursion(newCoeff, nbIterations - 1, sigma, finalTrans)
         }
-        catch
-        {
+        catch {
           case e: Exception => {
             System.err.println(s"An error occured in IcpBasedSurfaceFitting, iteration: ${numIterations - nbIterations}) / ${numIterations}")
             System.err.println(e)
@@ -120,7 +120,7 @@ case class IcpBasedSurfaceFitting(model: StatisticalMeshModel, target: TriangleM
         }
         (pars, rigid)
     }
-    val finalTransform = transformationSpace.transformForParameters(finalRegResult._1)
+    val finalTransform = transformationSpace.transformationForParameters(finalRegResult._1)
 
     model.transform(finalRegResult._2).instance(finalRegResult._1)
   }

@@ -28,7 +28,7 @@ import apps.femur.RandomSamplesFromModel.InitialiseShapeParameters
 import apps.util.FileUtils
 import breeze.linalg.{DenseMatrix, DenseVector}
 import scalismo.geometry._
-import scalismo.io.{MeshIO, StatismoIO}
+import scalismo.io.{MeshIO, StatisticalModelIO}
 import scalismo.mesh.{MeshMetrics, TriangleMesh, TriangleMesh3D}
 import scalismo.statisticalmodel.{MultivariateNormalDistribution, StatisticalMeshModel}
 import scalismo.ui.api.ScalismoUIHeadless
@@ -85,7 +85,7 @@ object StdIcpVsChainICPrandomInitComparisonAll {
     logPath.mkdir()
 
     val modelFile = new File(dataFemurPath, "femur_gp_model_200-components.h5")
-    val model = StatismoIO.readStatismoMeshModel(modelFile).get
+    val model = StatisticalModelIO.readStatisticalMeshModel(modelFile).get
 
     val subPath = "aligned"
 
@@ -96,8 +96,8 @@ object StdIcpVsChainICPrandomInitComparisonAll {
 
     println(s"Experiment file: ${experimentFile}")
 
-    val numOfEvalPoints = model.referenceMesh.pointSet.numberOfPoints/2 // Used for the likelihood evaluator
-    val numOfICPpointSamples = model.rank*2 // Used for the ICP proposal
+    val numOfEvalPoints = model.referenceMesh.pointSet.numberOfPoints / 2 // Used for the likelihood evaluator
+    val numOfICPpointSamples = model.rank * 2 // Used for the ICP proposal
 
     println("Target names:")
     targetMeshes.foreach(println(_))
