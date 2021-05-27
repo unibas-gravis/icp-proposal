@@ -70,10 +70,14 @@ case class NonRigidIcpProposal(
 
 
   override def logTransitionProbability(from: ModelFittingParameters, to: ModelFittingParameters): Double = {
-    val posterior = cashedPosterior(from)
-    val compensatedTo = to.copy(shapeParameters = ShapeParameters(from.shapeParameters.parameters + (to.shapeParameters.parameters - from.shapeParameters.parameters) / stepLength))
-    val pdf = posterior.logpdf(compensatedTo.shapeParameters.parameters)
-    pdf
+    val pos = cashedPosterior(from)
+    val posterior = StatisticalMeshModel(referenceMesh, pos)
+
+    val compensatedTo = from.shapeParameters.parameters + ((to.shapeParameters.parameters - from.shapeParameters.parameters) / stepLength)
+    val toMesh = model.instance(compensatedTo)
+
+    val projectedTo = posterior.coefficients(toMesh)
+    pos.logpdf(projectedTo)
   }
 
 
