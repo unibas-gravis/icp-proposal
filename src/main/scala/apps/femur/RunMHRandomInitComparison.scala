@@ -25,6 +25,7 @@ import apps.femur.Paths.{dataFemurPath, generalPath}
 import apps.util.FileUtils
 import scalismo.geometry._
 import scalismo.io.{MeshIO, StatisticalModelIO}
+import scalismo.utils.Random.implicits.randomGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration

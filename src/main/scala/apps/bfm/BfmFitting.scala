@@ -24,6 +24,7 @@ import api.sampling.{MixedProposalDistributions, ModelFittingParameters, Product
 import api.sampling.evaluators.ModelToTargetEvaluation
 import scalismo.ui.api.ScalismoUI
 import Paths.generalPath
+import scalismo.utils.Random.implicits.randomGenerator
 
 import scala.collection.parallel.ForkJoinTaskSupport
 

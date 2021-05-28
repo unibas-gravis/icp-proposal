@@ -21,14 +21,18 @@ import java.io.File
 
 import api.other.{ModelAndTargetSampling, RegistrationComparison}
 import api.sampling._
-import api.sampling.evaluators.SymmetricEvaluation
+import api.sampling.evaluators.ModelToTargetEvaluation
 import apps.femur.Paths.dataFemurPath
 import scalismo.geometry._3D
 import scalismo.mesh.{TriangleMesh, TriangleMesh3D}
-import scalismo.sampling.DistributionEvaluator
+import scalismo.sampling.{DistributionEvaluator, ProposalGenerator, TransitionProbability}
+import scalismo.sampling.proposals.MixtureProposal
 import scalismo.sampling.proposals.MixtureProposal.ProposalGeneratorWithTransition
 import scalismo.statisticalmodel.StatisticalMeshModel
 import scalismo.ui.api.{ScalismoUI, StatisticalMeshModelViewControls}
+import scalismo.utils.Random
+import scalismo.utils.Random.implicits.randomGenerator
+
 
 object IcpProposalRegistration {
 
@@ -53,33 +57,35 @@ object IcpProposalRegistration {
 
     val (model, modelLms, targetMesh, targetLms) = LoadTestData.modelAndTarget()
 
-    val numOfEvaluatorPoints = model.referenceMesh.pointSet.numberOfPoints/2 // Used for the likelihood evaluator
-    val numOfICPPointSamples = model.rank*2 // Used for the ICP proposal
+    val numOfEvaluatorPoints = model.rank * 4 // Used for the likelihood evaluator
+    val numOfICPPointSamples = model.rank * 2 // Used for the ICP proposal
     val numOfSamples = 10000 // Length of Markov Chain
 
-    /***** ***** ***** ***** ***** *****
-    * Closest Point proposal configuration
-    *  projectionDirection:
-    *  - TargetSampling (if registering partial meshes)
-    *  - ModelSampling (if registering noisy meshes)
-    *  - ModelAndTargetSampling (if registering clean complete meshes)
-    ***** ***** ***** ***** ***** *****/
-    val proposal = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 100.0, noiseAlongNormal = 3.0, stepLength = 0.1)
+    /** *** ***** ***** ***** ***** *****
+      * Closest Point proposal configuration
+      * projectionDirection:
+      *  - TargetSampling (if registering partial meshes)
+      *  - ModelSampling (if registering noisy meshes)
+      *  - ModelAndTargetSampling (if registering clean complete meshes)
+      *    **** ***** ***** ***** ***** **** */
+    val proposal1 = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 10.0, noiseAlongNormal = 5.0, stepLength = 0.1)
+    val proposal2 = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 10.0, noiseAlongNormal = 5.0, stepLength = 0.5)
+    val proposal = MixtureProposal.fromProposalsWithTransition(Seq((0.5, proposal1), (0.5, proposal2)): _ *)
+
     /* Uncomment below to use the standard "Random walk proposal" proposal */
-//    val proposal = MixedProposalDistributions.mixedProposalRandom(model)
+    //    val proposal = MixedProposalDistributions.mixedProposalRandom(model)
 
     /***** ***** ***** ***** ***** *****
     * Choosing the likelihood function
-    *  - euclideanEvaluator (gaussian distribution): gives best L2 distance restults
-    *  - hausdorffEvaluator (exponential distribution): gives best hausdorff result
-    * evaluationMode:
-    *  - ModelToTargetEvaluation (if registering noisy meshes)
-    *  - TargetToModelEvaluation (if registering partial meshes)
-    *  - SymmetricEvaluation (if registering clean complete meshes)
-    ***** ***** ***** ***** ***** *****/
-    val evaluator = ProductEvaluators.proximityAndIndependent(model, targetMesh, evaluationMode = SymmetricEvaluation, uncertainty = 1.0, numberOfEvaluationPoints = numOfEvaluatorPoints)
+    * - euclideanEvaluator (gaussian distribution): gives best L2 distance restults
+    * - hausdorffEvaluator (exponential distribution): gives best hausdorff result evaluationMode:
+    * - ModelToTargetEvaluation (if registering noisy meshes)
+    * - TargetToModelEvaluation (if registering partial meshes)
+    * - SymmetricEvaluation (if registering clean complete meshes)
+    ***** ***** ***** ***** ***** **** */
+    val evaluator = ProductEvaluators.proximityAndIndependent(model, targetMesh, evaluationMode = ModelToTargetEvaluation, uncertainty = 2.0, numberOfEvaluationPoints = numOfEvaluatorPoints)
     /* Uncomment below to use the hausdorff likelihood function */
-//    val evaluator = ProductEvaluators.proximityAndHausdorff(model, targetMesh, uncertainty = 100.0)
+    //    val evaluator = ProductEvaluators.proximityAndHausdorff(model, targetMesh, uncertainty = 100.0)
 
     val ui = ScalismoUI(s"MH-ICP-proposal-registration")
     val modelGroup = ui.createGroup("modelGroup")

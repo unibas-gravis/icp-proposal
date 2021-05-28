@@ -18,11 +18,10 @@ package api.sampling.proposals
 
 import api.other.{IcpProjectionDirection, ModelSampling, TargetSampling}
 import api.sampling.{ModelFittingParameters, ShapeParameters, SurfaceNoiseHelpers}
+import scalismo.common.Field
 import scalismo.common.interpolation.NearestNeighborInterpolator
-import scalismo.common.{Field, PointId}
 import scalismo.geometry._
 import scalismo.mesh.{TriangleMesh, TriangleMesh3D}
-import scalismo.numerics.UniformMeshSampler3D
 import scalismo.sampling.{ProposalGenerator, TransitionProbability}
 import scalismo.statisticalmodel.{LowRankGaussianProcess, MultivariateNormalDistribution, StatisticalMeshModel}
 import scalismo.transformations.RigidTransformation
@@ -43,14 +42,13 @@ case class NonRigidIcpProposal(
                               ) extends ProposalGenerator[ModelFittingParameters]
   with TransitionProbability[ModelFittingParameters] {
 
+  private val decimatedModel = model.decimate(numOfSamplePoints)
+  private val decimatedTarget = target.operations.decimate(numOfSamplePoints)
+
   private val referenceMesh = model.referenceMesh
   private val cashedPosterior: Memoize[ModelFittingParameters, LowRankGaussianProcess[_3D, EuclideanVector[_3D]]] = Memoize(icpPosterior, 20)
 
   private lazy val interpolatedModel = model.gp.interpolate(NearestNeighborInterpolator())
-
-  private val modelPoints = UniformMeshSampler3D(model.referenceMesh, numOfSamplePoints).sample().map(_._1)
-  private val modelIds: IndexedSeq[PointId] = modelPoints.map(p => model.referenceMesh.pointSet.findClosestPoint(p).id).toIndexedSeq
-  private val targetPoints: IndexedSeq[Point[_3D]] = UniformMeshSampler3D(target, numOfSamplePoints).sample().map(_._1).toIndexedSeq
 
   override def propose(theta: ModelFittingParameters): ModelFittingParameters = {
     val posterior = cashedPosterior(theta)
@@ -71,14 +69,18 @@ case class NonRigidIcpProposal(
 
 
   override def logTransitionProbability(from: ModelFittingParameters, to: ModelFittingParameters): Double = {
-    val pos = cashedPosterior(from)
-    val posterior = StatisticalMeshModel(referenceMesh, pos)
+    if (from.shapeParameters.parameters == to.shapeParameters.parameters) {
+      Double.NegativeInfinity
+    } else {
+      val pos = cashedPosterior(from)
+      val posterior = StatisticalMeshModel(referenceMesh, pos)
 
-    val compensatedTo = from.shapeParameters.parameters + ((to.shapeParameters.parameters - from.shapeParameters.parameters) / stepLength)
-    val toMesh = model.instance(compensatedTo)
+      val compensatedTo = from.shapeParameters.parameters + ((to.shapeParameters.parameters - from.shapeParameters.parameters) / stepLength)
+      val toMesh = model.instance(compensatedTo)
 
-    val projectedTo = posterior.coefficients(toMesh)
-    pos.logpdf(projectedTo)
+      val projectedTo = posterior.coefficients(toMesh)
+      pos.logpdf(projectedTo)
+    }
   }
 
 
@@ -88,7 +90,7 @@ case class NonRigidIcpProposal(
                                            inversePoseTransform: RigidTransformation[_3D]
                                          ): IndexedSeq[(Point[_3D], EuclideanVector[_3D], MultivariateNormalDistribution)] = {
 
-      val noisyCorrespondence = modelIds.map {
+      val noisyCorrespondence = decimatedModel.referenceMesh.pointSet.pointIds.toIndexedSeq.map {
         id =>
           val currentMeshPoint = currentMesh.pointSet.point(id)
           val targetPoint = target.operations.closestPointOnSurface(currentMeshPoint).point
@@ -111,7 +113,7 @@ case class NonRigidIcpProposal(
                                             inversePoseTransform: RigidTransformation[_3D]
                                           ): IndexedSeq[(Point[_3D], EuclideanVector[_3D], MultivariateNormalDistribution)] = {
 
-      val noisyCorrespondence = targetPoints.map { targetPoint =>
+      val noisyCorrespondence = decimatedTarget.pointSet.points.toIndexedSeq.map { targetPoint =>
         val id = currentMesh.pointSet.findClosestPoint(targetPoint).id
         val isOnBoundary = currentMesh.operations.pointIsOnBoundary(id)
         val noiseDistribution = SurfaceNoiseHelpers.surfaceNormalDependantNoise(currentMesh.vertexNormals.atPoint(id), noiseAlongNormal, tangentialNoise)

@@ -23,11 +23,10 @@ import scalismo.sampling.proposals.MixtureProposal
 import scalismo.sampling.proposals.MixtureProposal.ProposalGeneratorWithTransition
 import scalismo.statisticalmodel.StatisticalMeshModel
 import scalismo.sampling.proposals.MixtureProposal.implicits._
-import scalismo.utils.Random.implicits._
 
 object MixedProposalDistributions {
 
-  def mixedProposalRandom(model: StatisticalMeshModel): ProposalGeneratorWithTransition[ModelFittingParameters] = {
+  def mixedProposalRandom(model: StatisticalMeshModel)(implicit rand: scalismo.utils.Random): ProposalGeneratorWithTransition[ModelFittingParameters] = {
     val mixproposal = MixtureProposal(
         0.5 *: RandomShapeUpdateProposal(model, 0.1, generatedBy = "RandomShape-0.1") +
         0.5 *: RandomShapeUpdateProposal(model, 0.01, generatedBy = "RandomShape-0.01") +
@@ -36,7 +35,7 @@ object MixedProposalDistributions {
     mixproposal
   }
 
-  def mixedProposalICP(model: StatisticalMeshModel, target: TriangleMesh3D, numOfSamplePoints: Int, projectionDirection: IcpProjectionDirection = ModelAndTargetSampling, tangentialNoise: Double = 100.0, noiseAlongNormal: Double = 3.0, stepLength: Double = 0.1, boundaryAware: Boolean = true): ProposalGeneratorWithTransition[ModelFittingParameters] = {
+  def mixedProposalICP(model: StatisticalMeshModel, target: TriangleMesh3D, numOfSamplePoints: Int, projectionDirection: IcpProjectionDirection = ModelAndTargetSampling, tangentialNoise: Double = 100.0, noiseAlongNormal: Double = 3.0, stepLength: Double = 0.1, boundaryAware: Boolean = true)(implicit rand: scalismo.utils.Random): ProposalGeneratorWithTransition[ModelFittingParameters] = {
 
     val rate = 0.5
 
