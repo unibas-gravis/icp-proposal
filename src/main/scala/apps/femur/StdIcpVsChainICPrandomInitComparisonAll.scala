@@ -30,6 +30,7 @@ import breeze.linalg.{DenseMatrix, DenseVector}
 import scalismo.geometry._
 import scalismo.io.{MeshIO, StatisticalModelIO}
 import scalismo.mesh.{MeshMetrics, TriangleMesh, TriangleMesh3D}
+import scalismo.sampling.proposals.MixtureProposal
 import scalismo.statisticalmodel.{MultivariateNormalDistribution, StatisticalMeshModel}
 import scalismo.ui.api.ScalismoUIHeadless
 import scalismo.utils.Random.implicits._
@@ -80,7 +81,7 @@ object StdIcpVsChainICPrandomInitComparisonAll {
 
     println("Running ICP vs Sampling experiment (Euclidean and Hausdorff)")
 
-    val normalNoise = 3.0
+    val normalNoise = 5.0
     val logPath = new File(dataFemurPath, "log/paper_base_200_experiment/")
     logPath.mkdir()
 
@@ -121,12 +122,13 @@ object StdIcpVsChainICPrandomInitComparisonAll {
       innerLoop.foreach { case (i) =>
         println(s"Starting fitting with random initialization of shape parameters: $i")
 
-        val proposalIcp = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPpointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 100.0, noiseAlongNormal = normalNoise, stepLength = 0.1, boundaryAware = true)
+        val proposalICP = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPpointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 10.0, noiseAlongNormal = 5.0, stepLength = 0.1)
+        val proposalRND = MixedProposalDistributions.mixedProposalRandom(model)
+        val proposal = MixtureProposal.fromProposalsWithTransition(Seq((0.90, proposalICP), (0.10, proposalRND)): _ *)
 
         val rotatCenter: EuclideanVector[_3D] = model.referenceMesh.pointSet.points.map(_.toVector).reduce(_ + _) * 1.0 / model.referenceMesh.pointSet.numberOfPoints.toDouble
         val initPoseParameters = PoseParameters(EuclideanVector3D(0, 0, 0), (0, 0, 0), rotationCenter = rotatCenter.toPoint)
 
-        val initShape = MeshIO.readMesh(new File(dataFemurPath, "modelsamples").listFiles().find(f => f.getName == s"${i}.stl").get).get
         val initShapeParameters = InitialiseShapeParameters(model.rank, i)
 
         val initPars = ModelFittingParameters(initPoseParameters, initShapeParameters)
@@ -146,16 +148,16 @@ object StdIcpVsChainICPrandomInitComparisonAll {
         val bestDeterministicRegistration = IcpRegistration.fitting(model, targetMesh, model.referenceMesh.pointSet.numberOfPoints, 100, Option(showModel), initialParameters = Option(initPars))
         ui.show(finalGroup, bestDeterministicRegistration, "ICP_best")
 
-        val evaluatorEuclidean = ProductEvaluators.proximityAndIndependent(model, targetMesh, ModelToTargetEvaluation, uncertainty = 1.0, numberOfEvaluationPoints = numOfEvalPoints)
+        val evaluatorEuclidean = ProductEvaluators.proximityAndIndependent(model, targetMesh, ModelToTargetEvaluation, uncertainty = 2.0, numberOfEvaluationPoints = numOfEvalPoints)
         val evaluatorHausdorff = ProductEvaluators.proximityAndHausdorff(model, targetMesh, uncertainty = 100.0)
 
-        val numOfSamples = 10000
+        val numOfSamples = 1000
 
         val samplingLoggerPathEuclidean = new File(logPath, s"ICPComparisonEuclidean-$normalNoise-$basename-$targetname-samples-$numOfSamples-$i-index.json")
-        val bestSamplingRegistrationEuclidean = IcpProposalRegistration.fitting(model, targetMesh, evaluatorEuclidean, proposalIcp, numOfSamples, Option(showModel), samplingLoggerPathEuclidean, initialParameters = Option(initPars))
+        val bestSamplingRegistrationEuclidean = IcpProposalRegistration.fitting(model, targetMesh, evaluatorEuclidean, proposal, numOfSamples, Option(showModel), samplingLoggerPathEuclidean, initialParameters = Option(initPars))
 
         val samplingLoggerPathHausdorff = new File(logPath, s"ICPComparisonHausdorff-$normalNoise-$basename-$targetname-samples-$numOfSamples-$i-index.json")
-        val bestSamplingRegistrationHausdorff = IcpProposalRegistration.fitting(model, targetMesh, evaluatorHausdorff, proposalIcp, numOfSamples, Option(showModel), samplingLoggerPathHausdorff, initialParameters = Option(initPars))
+        val bestSamplingRegistrationHausdorff = IcpProposalRegistration.fitting(model, targetMesh, evaluatorHausdorff, proposal, numOfSamples, Option(showModel), samplingLoggerPathHausdorff, initialParameters = Option(initPars))
 
         appendExperiment(model, experimentLogger, i, targetMesh, bestSamplingRegistrationEuclidean, bestSamplingRegistrationHausdorff, bestDeterministicRegistration, targetMeshFile.toString, samplingLoggerPathEuclidean.toString, samplingLoggerPathHausdorff.toString, initPars.shapeParameters.parameters, numOfEvalPoints, numOfSamples, normalNoise, "")
       }

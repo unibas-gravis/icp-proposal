@@ -19,11 +19,12 @@ package apps.femur
 import java.awt.Color
 import java.io.File
 
-import api.other.{ModelAndTargetSampling, RegistrationComparison}
+import api.other.{ModelAndTargetSampling, ModelSampling, RegistrationComparison}
 import api.sampling._
 import api.sampling.evaluators.ModelToTargetEvaluation
 import apps.femur.Paths.dataFemurPath
-import scalismo.geometry._3D
+import breeze.linalg.DenseVector
+import scalismo.geometry.{EuclideanVector, EuclideanVector3D, _3D}
 import scalismo.mesh.{TriangleMesh, TriangleMesh3D}
 import scalismo.sampling.{DistributionEvaluator, ProposalGenerator, TransitionProbability}
 import scalismo.sampling.proposals.MixtureProposal
@@ -68,9 +69,9 @@ object IcpProposalRegistration {
       *  - ModelSampling (if registering noisy meshes)
       *  - ModelAndTargetSampling (if registering clean complete meshes)
       *    **** ***** ***** ***** ***** **** */
-    val proposal1 = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 10.0, noiseAlongNormal = 5.0, stepLength = 0.1)
-    val proposal2 = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 10.0, noiseAlongNormal = 5.0, stepLength = 0.5)
-    val proposal = MixtureProposal.fromProposalsWithTransition(Seq((0.5, proposal1), (0.5, proposal2)): _ *)
+    val proposalICP = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 10.0, noiseAlongNormal = 5.0, stepLength = 0.1)
+    val proposalRND = MixedProposalDistributions.mixedProposalRandom(model)
+    val proposal = MixtureProposal.fromProposalsWithTransition(Seq((0.90, proposalICP), (0.10, proposalRND)): _ *)
 
     /* Uncomment below to use the standard "Random walk proposal" proposal */
     //    val proposal = MixedProposalDistributions.mixedProposalRandom(model)

@@ -57,8 +57,8 @@ object RunMHRandomInitComparison {
     val numOfRNDSamples = numOfICPSamples * 5 // Length of Markov Chain
 
     val proposalIcp = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelSampling)
-    val proposalRnd = MixedProposalDistributions.mixedProposalRandom(model)
-    val evaluator = ProductEvaluators.proximityAndIndependent(model, targetMesh, SymmetricEvaluation, uncertainty = 1.0, numberOfEvaluationPoints = numOfEvaluatorPoints)
+    val proposalRnd = MixedProposalDistributions.mixedProposalRandom(model, Seq(0.1, 0.01, 0.001))
+    val evaluator = ProductEvaluators.proximityAndIndependent(model, targetMesh, SymmetricEvaluation, uncertainty = 2.0, numberOfEvaluationPoints = numOfEvaluatorPoints)
 
     val modelName = FileUtils.basename(modelFile)
     val targetName = FileUtils.basename(targetMeshFile)

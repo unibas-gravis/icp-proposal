@@ -40,7 +40,7 @@ object PosteriorVariabilityToMeshColor {
 
     val logObj = new JSONAcceptRejectLogger[ModelFittingParameters](new File(logPath, jsonFileName))
     val logInit: IndexedSeq[jsonLogFormat] = logObj.loadLog()
-    val burnInPhase = 1000
+    val burnInPhase = 200
 
     val logSamples = LogHelper.samplesFromLog(logInit, takeEveryN = 50, total = 10000, burnInPhase)
     println(s"Number of samples from log: ${logSamples.length}/${logInit.length - burnInPhase}")
