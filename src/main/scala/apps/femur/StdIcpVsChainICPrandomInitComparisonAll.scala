@@ -123,7 +123,7 @@ object StdIcpVsChainICPrandomInitComparisonAll {
         println(s"Starting fitting with random initialization of shape parameters: $i")
 
         val proposalICP = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPpointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 10.0, noiseAlongNormal = 5.0, stepLength = 0.1)
-        val proposalRND = MixedProposalDistributions.mixedProposalRandom(model)
+        val proposalRND = MixedProposalDistributions.mixedRandomShapeProposal(model)
         val proposal = MixtureProposal.fromProposalsWithTransition(Seq((0.90, proposalICP), (0.10, proposalRND)): _ *)
 
         val rotatCenter: EuclideanVector[_3D] = model.referenceMesh.pointSet.points.map(_.toVector).reduce(_ + _) * 1.0 / model.referenceMesh.pointSet.numberOfPoints.toDouble

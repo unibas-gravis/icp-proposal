@@ -70,7 +70,7 @@ object IcpProposalRegistration {
       *  - ModelAndTargetSampling (if registering clean complete meshes)
       *    **** ***** ***** ***** ***** **** */
     val proposalICP = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelAndTargetSampling, tangentialNoise = 10.0, noiseAlongNormal = 5.0, stepLength = 0.1)
-    val proposalRND = MixedProposalDistributions.mixedProposalRandom(model)
+    val proposalRND = MixedProposalDistributions.mixedRandomShapeProposal(model)
     val proposal = MixtureProposal.fromProposalsWithTransition(Seq((0.90, proposalICP), (0.10, proposalRND)): _ *)
 
     /* Uncomment below to use the standard "Random walk proposal" proposal */
