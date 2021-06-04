@@ -19,19 +19,17 @@ package apps.femur
 import java.awt.Color
 import java.io.File
 
-import api.other.{ModelAndTargetSampling, ModelSampling, RegistrationComparison}
+import api.other.{ModelAndTargetSampling, RegistrationComparison}
 import api.sampling._
 import api.sampling.evaluators.ModelToTargetEvaluation
 import apps.femur.Paths.dataFemurPath
-import breeze.linalg.DenseVector
-import scalismo.geometry.{EuclideanVector, EuclideanVector3D, _3D}
+import scalismo.geometry._3D
 import scalismo.mesh.{TriangleMesh, TriangleMesh3D}
-import scalismo.sampling.{DistributionEvaluator, ProposalGenerator, TransitionProbability}
+import scalismo.sampling.DistributionEvaluator
 import scalismo.sampling.proposals.MixtureProposal
 import scalismo.sampling.proposals.MixtureProposal.ProposalGeneratorWithTransition
 import scalismo.statisticalmodel.StatisticalMeshModel
 import scalismo.ui.api.{ScalismoUI, StatisticalMeshModelViewControls}
-import scalismo.utils.Random
 import scalismo.utils.Random.implicits.randomGenerator
 
 

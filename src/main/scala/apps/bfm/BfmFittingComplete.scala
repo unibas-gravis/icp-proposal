@@ -19,7 +19,7 @@ package apps.bfm
 import java.awt.Color
 import java.io.File
 
-import api.other.{ModelAndTargetSampling, ModelSampling, RegistrationComparison}
+import api.other.{ModelSampling, RegistrationComparison}
 import api.sampling.evaluators.ModelToTargetEvaluation
 import api.sampling.{MixedProposalDistributions, ModelFittingParameters, ProductEvaluators, SamplingRegistration}
 import apps.bfm.Paths.generalPath
@@ -50,7 +50,6 @@ object BfmFittingComplete {
 
       // visualization setup
       val ui = ScalismoUI(s"BFM-icp-fitting ${faceIndex}")
-//      val ui = ScalismoUIHeadless()
 
       val modelGroup = ui.createGroup("modelGroup")
       val targetGroup = ui.createGroup("targetGroup")
@@ -66,7 +65,6 @@ object BfmFittingComplete {
       val proposalRandomShape = MixedProposalDistributions.mixedRandomShapeProposal(model)
 
       val proposal = MixtureProposal.fromProposalsWithTransition(Seq((0.4, proposalRandomPose), (0.55, proposalICP), (0.05, proposalRandomShape)): _ *)
-
 
 
       // evaluator

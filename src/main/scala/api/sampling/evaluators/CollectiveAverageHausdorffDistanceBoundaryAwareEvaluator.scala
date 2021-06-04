@@ -18,10 +18,8 @@ package api.sampling.evaluators
 
 import api.sampling.ModelFittingParameters
 import breeze.stats.distributions.ContinuousDistr
-import scalismo.common.PointId
-import scalismo.geometry.{Point, _3D}
+import scalismo.geometry._3D
 import scalismo.mesh.TriangleMesh
-import scalismo.numerics.UniformMeshSampler3D
 import scalismo.sampling.DistributionEvaluator
 import scalismo.statisticalmodel.StatisticalMeshModel
 import scalismo.utils.Random

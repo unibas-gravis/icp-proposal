@@ -23,7 +23,7 @@ import scalismo.geometry.{Point, SquareMatrix, _3D}
 import scalismo.kernels.{BSplineKernel, DiagonalKernel, MatrixValuedPDKernel}
 import scalismo.mesh.TriangleMesh
 
-case class SpatiallyVaryingMultiscaleKernel(levelsWithScale : Seq[LevelWithScale],
+case class SpatiallyVaryingMultiscaleKernel(levelsWithScale: Seq[LevelWithScale],
                                             mask: FaceMask, referenceMesh: TriangleMesh[_3D]) extends MatrixValuedPDKernel[_3D] {
 
 
@@ -55,13 +55,13 @@ case class SpatiallyVaryingMultiscaleKernel(levelsWithScale : Seq[LevelWithScale
 
 }
 
-case class FaceKernel(faceMask : FaceMask, referenceMesh: TriangleMesh[_3D]) extends MatrixValuedPDKernel[_3D] {
+case class FaceKernel(faceMask: FaceMask, referenceMesh: TriangleMesh[_3D]) extends MatrixValuedPDKernel[_3D] {
 
 
   private val faceKernel = {
 
-    val levelsAndScales =   Seq(
-      LevelWithScale(-6,128.0),
+    val levelsAndScales = Seq(
+      LevelWithScale(-6, 128.0),
       LevelWithScale(-5, 64.0),
       LevelWithScale(-4, 32.0),
       LevelWithScale(-3, 10.0),
@@ -74,13 +74,13 @@ case class FaceKernel(faceMask : FaceMask, referenceMesh: TriangleMesh[_3D]) ext
     symmetricKernel * 0.7 + spatiallyVaryingKernel * 0.3
   }
 
-  override protected def k(x: Point[_3D], y: Point[_3D]): DenseMatrix[Double] = faceKernel(x,y)
+  override protected def k(x: Point[_3D], y: Point[_3D]): DenseMatrix[Double] = faceKernel(x, y)
 
   override def domain: Domain[_3D] = EuclideanSpace3D
 
   override def outputDim: Int = 3
 
-  private def symmetrize(kernel: MatrixValuedPDKernel[_3D]) :  MatrixValuedPDKernel[_3D] = {
+  private def symmetrize(kernel: MatrixValuedPDKernel[_3D]): MatrixValuedPDKernel[_3D] = {
 
     new MatrixValuedPDKernel[_3D] {
       override def outputDim = 3
@@ -108,5 +108,7 @@ case class FaceKernel(faceMask : FaceMask, referenceMesh: TriangleMesh[_3D]) ext
 }
 
 object FaceKernel {
-  case class LevelWithScale(level : Int, scale : Double)
+
+  case class LevelWithScale(level: Int, scale: Double)
+
 }

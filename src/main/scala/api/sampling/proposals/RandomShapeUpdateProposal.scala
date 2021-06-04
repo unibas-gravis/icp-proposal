@@ -36,7 +36,7 @@ case class RandomShapeUpdateProposal(model: StatisticalMeshModel, stdev: Double,
   }
 
   override def logTransitionProbability(from: ModelFittingParameters, to: ModelFittingParameters): Double = {
-    if (to.copy(shapeParameters = from.shapeParameters).allParameters != from.allParameters){
+    if (to.copy(shapeParameters = from.shapeParameters).allParameters != from.allParameters) {
       Double.NegativeInfinity
     } else {
       val residual = to.shapeParameters.parameters - from.shapeParameters.parameters

@@ -69,7 +69,7 @@ case class NonRigidIcpProposal(
 
 
   override def logTransitionProbability(from: ModelFittingParameters, to: ModelFittingParameters): Double = {
-    if (to.copy(shapeParameters = from.shapeParameters).allParameters != from.allParameters){
+    if (to.copy(shapeParameters = from.shapeParameters).allParameters != from.allParameters) {
       Double.NegativeInfinity
     }
     else {

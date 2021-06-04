@@ -21,9 +21,9 @@ import java.io.File
 
 import api.sampling.ModelFittingParameters
 import api.sampling.loggers.{JSONAcceptRejectLogger, jsonLogFormat}
+import apps.femur.Paths.dataFemurPath
 import apps.util.{LogHelper, PosteriorVariability}
 import scalismo.ui.api.ScalismoUI
-import apps.femur.Paths.dataFemurPath
 
 object PosteriorVariabilityToMeshColor {
 

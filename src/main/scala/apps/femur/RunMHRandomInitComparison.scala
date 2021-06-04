@@ -69,7 +69,6 @@ object RunMHRandomInitComparison {
       val rotatCenter: EuclideanVector[_3D] = model.referenceMesh.pointSet.points.map(_.toVector).reduce(_ + _) * 1.0 / model.referenceMesh.pointSet.numberOfPoints.toDouble
       val initPoseParameters = PoseParameters(EuclideanVector3D(0, 0, 0), (0, 0, 0), rotationCenter = rotatCenter.toPoint)
       val initShape = MeshIO.readMesh(new File(dataFemurPath, "modelsamples").listFiles().find(f => f.getName == s"${i}.stl").get).get
-      //      val initShapeParameters = InitialiseShapeParameters(model.rank, i)
       val initShapeParameters = ShapeParameters(model.coefficients(initShape))
 
       val initialParametersRandom = ModelFittingParameters(initPoseParameters, initShapeParameters)

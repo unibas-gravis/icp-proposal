@@ -21,12 +21,12 @@ import api.sampling.proposals._
 import scalismo.mesh.TriangleMesh3D
 import scalismo.sampling.proposals.MixtureProposal
 import scalismo.sampling.proposals.MixtureProposal.ProposalGeneratorWithTransition
-import scalismo.statisticalmodel.StatisticalMeshModel
 import scalismo.sampling.proposals.MixtureProposal.implicits._
+import scalismo.statisticalmodel.StatisticalMeshModel
 
 object MixedProposalDistributions {
 
-  def mixedRandomPoseProposal(rotYaw: Double = 0.01, rotPitch: Double = 0.01, rotRoll: Double = 0.01, transX: Double = 0.1, transY: Double = 0.1, transZ: Double = 0.1)(implicit rand: scalismo.utils.Random): ProposalGeneratorWithTransition[ModelFittingParameters] ={
+  def mixedRandomPoseProposal(rotYaw: Double = 0.01, rotPitch: Double = 0.01, rotRoll: Double = 0.01, transX: Double = 0.1, transY: Double = 0.1, transZ: Double = 0.1)(implicit rand: scalismo.utils.Random): ProposalGeneratorWithTransition[ModelFittingParameters] = {
     val mixproposal = MixtureProposal(
         0.5 *: GaussianAxisRotationProposal(rotYaw, YawAxis, generatedBy = s"RotationYaw-${rotYaw}") +
         0.5 *: GaussianAxisRotationProposal(rotPitch, PitchAxis, generatedBy = s"RotationPitch-${rotPitch}") +

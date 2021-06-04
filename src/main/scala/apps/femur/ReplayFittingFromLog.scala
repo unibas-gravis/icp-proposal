@@ -18,11 +18,12 @@ package apps.femur
 
 import java.awt.Color
 import java.io.File
+
 import api.sampling.ModelFittingParameters
 import api.sampling.loggers.{JSONAcceptRejectLogger, jsonLogFormat}
+import apps.femur.Paths.dataFemurPath
 import scalismo.ui.api.ScalismoUI
 import scalismo.utils.Random
-import apps.femur.Paths.dataFemurPath
 
 
 object ReplayFittingFromLog {

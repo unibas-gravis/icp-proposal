@@ -19,12 +19,12 @@ package apps.bfm
 import java.awt.Color
 import java.io.File
 
-import api.other.{ModelAndTargetSampling, ModelSampling, RegistrationComparison}
+import api.other.{ModelSampling, RegistrationComparison}
+import api.sampling.evaluators.SymmetricEvaluation
 import api.sampling.{MixedProposalDistributions, ModelFittingParameters, ProductEvaluators, SamplingRegistration}
-import api.sampling.evaluators.{ModelToTargetEvaluation, SymmetricEvaluation}
-import scalismo.ui.api.ScalismoUI
-import Paths.generalPath
+import apps.bfm.Paths.generalPath
 import scalismo.sampling.proposals.MixtureProposal
+import scalismo.ui.api.ScalismoUI
 import scalismo.utils.Random.implicits.randomGenerator
 
 object BfmFittingPartial {
@@ -37,7 +37,7 @@ object BfmFittingPartial {
     val fileList = alignedMeshesPath.listFiles().filter(f => f.getName.endsWith(".stl")).sorted.toIndexedSeq
     fileList.foreach(println(_))
 
-    fileList.zipWithIndex.foreach{case (_, faceIndex) =>
+    fileList.zipWithIndex.foreach { case (_, faceIndex) =>
       println(s"FACE INDEX: ${faceIndex}")
 
       // load the data
@@ -51,7 +51,6 @@ object BfmFittingPartial {
 
       // visualization setup
       val ui = ScalismoUI(s"BFM-icp-fitting ${faceIndex}")
-//      val ui = ScalismoUIHeadless()
 
       val modelGroup = ui.createGroup("modelGroup")
       val targetGroup = ui.createGroup("targetGroup")
@@ -76,7 +75,7 @@ object BfmFittingPartial {
       val avgUncertainty = 0.3
       val maxUncertainty = 1.0
       // evaluator
-      val numOfEvaluatorPoints = numOfICPPointSamples*2
+      val numOfEvaluatorPoints = numOfICPPointSamples * 2
 
       val evaluator = ProductEvaluators.proximityAndCollectiveHausdorffBoundaryAware(model, targetMeshPartial, evaluationMode = SymmetricEvaluation, uncertaintyAvg = avgUncertainty, numberOfEvaluationPoints = numOfEvaluatorPoints, uncertaintyMax = maxUncertainty, mean = 0.1)
 

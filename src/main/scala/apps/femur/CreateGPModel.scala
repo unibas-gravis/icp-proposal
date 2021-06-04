@@ -21,7 +21,7 @@ import java.io.File
 import apps.femur.Paths.dataFemurPath
 import breeze.linalg.DenseMatrix
 import breeze.linalg.svd.SVD
-import scalismo.common.{Domain, EuclideanSpace, EuclideanSpace3D}
+import scalismo.common.{Domain, EuclideanSpace3D}
 import scalismo.geometry._
 import scalismo.io.{MeshIO, StatisticalModelIO}
 import scalismo.kernels._
