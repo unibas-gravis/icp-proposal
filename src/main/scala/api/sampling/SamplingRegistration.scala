@@ -26,12 +26,12 @@ import scalismo.geometry._
 import scalismo.mesh.TriangleMesh3D
 import scalismo.sampling.DistributionEvaluator
 import scalismo.sampling.algorithms.MetropolisHastings
+import scalismo.sampling.loggers.ChainStateLogger.implicits._
 import scalismo.sampling.loggers.{BestSampleLogger, ChainStateLoggerContainer}
 import scalismo.sampling.proposals.MixtureProposal
 import scalismo.statisticalmodel.StatisticalMeshModel
-import scalismo.utils.Random
-import scalismo.sampling.loggers.ChainStateLogger.implicits._
 import scalismo.ui.api.StatisticalMeshModelViewControls
+import scalismo.utils.Random
 
 
 class SamplingRegistration(model: StatisticalMeshModel, sample: TriangleMesh3D, modelUi: Option[StatisticalMeshModelViewControls] = None, modelUiUpdateInterval: Int = 1000, acceptInfoPrintInterval: Int = 10000) {

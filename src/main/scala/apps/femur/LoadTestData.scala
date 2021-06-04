@@ -18,13 +18,13 @@ package apps.femur
 
 import java.io.File
 
+import apps.femur.Paths.dataFemurPath
 import apps.util.AlignmentTransforms
 import scalismo.geometry.{Landmark, Point3D, _3D}
-import scalismo.io.{LandmarkIO, MeshIO, StatismoIO}
+import scalismo.io.{LandmarkIO, MeshIO, StatisticalModelIO}
 import scalismo.mesh.TriangleMesh
 import scalismo.statisticalmodel.StatisticalMeshModel
 import scalismo.utils.Random.implicits._
-import apps.femur.Paths.dataFemurPath
 
 
 object LoadTestData {
@@ -32,7 +32,7 @@ object LoadTestData {
   def modelAndTarget(): (StatisticalMeshModel, Seq[Landmark[_3D]], TriangleMesh[_3D], Seq[Landmark[_3D]]) = {
 
     val modelFile = new File(dataFemurPath, "femur_gp_model_50-components.h5")
-    val model = StatismoIO.readStatismoMeshModel(modelFile).get
+    val model = StatisticalModelIO.readStatisticalMeshModel(modelFile).get
     val modelLmsFile = new File(dataFemurPath, "femur_reference.json")
     val modelLms = LandmarkIO.readLandmarksJson[_3D](modelLmsFile).get
     println(s"Model file to be used: $modelFile")

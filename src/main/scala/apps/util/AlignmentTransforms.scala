@@ -17,7 +17,8 @@
 package apps.util
 
 import scalismo.geometry.{Landmark, Point, _3D}
-import scalismo.registration.{LandmarkRegistration, RigidTransformation}
+import scalismo.registration.LandmarkRegistration
+import scalismo.transformations.RigidTransformation
 
 object AlignmentTransforms {
 

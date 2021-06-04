@@ -17,11 +17,12 @@
 package api.sampling
 
 import breeze.linalg.DenseVector
-import scalismo.common.{NearestNeighborInterpolator, PointId}
+import scalismo.common.PointId
+import scalismo.common.interpolation.NearestNeighborInterpolator
 import scalismo.geometry.{EuclideanVector, Point, _3D}
 import scalismo.mesh.TriangleMesh
-import scalismo.registration._
 import scalismo.statisticalmodel.StatisticalMeshModel
+import scalismo.transformations._
 
 case class ScaleParameter(s: Double) {
   def parameters: DenseVector[Double] = DenseVector(s)
@@ -35,7 +36,7 @@ case class PoseParameters(translation: EuclideanVector[_3D], rotation: (Double, 
 }
 
 object PoseParameters {
-  def createFromRigidTransform(r: RigidTransformation[_3D]): PoseParameters = {
+  def createFromRigidTransform(r: TranslationAfterRotation[_3D]): PoseParameters = {
     val rotParams = r.rotation.parameters
     PoseParameters(r.translation.t, (rotParams(0), rotParams(1), rotParams(2)), r.rotation.center)
   }
@@ -75,17 +76,17 @@ object ModelFittingParameters {
   }
 
 
-  def poseTransform(parameter: ModelFittingParameters): RigidTransformation[_3D] = {
+  def poseTransform(parameter: ModelFittingParameters): TranslationAfterRotation[_3D] = {
     val poseParameters = parameter.poseParameters
-    val translation = TranslationTransform[_3D](poseParameters.translation)
+    val translation = Translation[_3D](poseParameters.translation)
     val (phi, theta, psi) = poseParameters.rotation
     val center = poseParameters.rotationCenter
-    val rotation = RotationTransform(phi, theta, psi, center)
-    RigidTransformation[_3D](translation, rotation)
+    val rotation = Rotation(phi, theta, psi, center)
+    TranslationAfterRotation[_3D](translation, rotation)
   }
 
-  def scaleTransform(parameters: ModelFittingParameters): ScalingTransformation[_3D] = {
-    ScalingTransformation(parameters.scalaParameter.s)
+  def scaleTransform(parameters: ModelFittingParameters): Scaling[_3D] = {
+    Scaling(parameters.scalaParameter.s)
   }
 
 

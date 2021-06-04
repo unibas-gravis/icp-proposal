@@ -18,18 +18,18 @@ package apps.femur
 
 import java.io.File
 
+import apps.femur.Paths.dataFemurPath
 import breeze.linalg.DenseMatrix
 import breeze.linalg.svd.SVD
-import scalismo.common.{Domain, RealSpace, VectorField}
+import scalismo.common.{Domain, EuclideanSpace3D}
 import scalismo.geometry._
-import scalismo.io.{MeshIO, StatismoIO}
+import scalismo.io.{MeshIO, StatisticalModelIO}
 import scalismo.kernels._
 import scalismo.mesh.TriangleMesh3D
 import scalismo.numerics.UniformMeshSampler3D
 import scalismo.statisticalmodel.{GaussianProcess, LowRankGaussianProcess, StatisticalMeshModel}
 import scalismo.ui.api.ScalismoUI
 import scalismo.utils.Random
-import apps.femur.Paths.dataFemurPath
 
 
 object CreateGPModel {
@@ -37,7 +37,7 @@ object CreateGPModel {
 
   def approxTotalVariance(gp: GaussianProcess[_3D, EuclideanVector[_3D]], evaluationDomain: TriangleMesh3D): Double = {
     val sampler = UniformMeshSampler3D(evaluationDomain, numberOfPoints = 50000)
-    val points = sampler.sample.unzip._1
+    val points = sampler.sample.map(_._1)
     val covValues = for (pt <- points) yield {
       gp.cov(pt, pt)
     }
@@ -65,15 +65,13 @@ object CreateGPModel {
 
       println("Num of points in ref: " + referenceMesh.pointSet.numberOfPoints)
 
-      val zeroMean = VectorField(RealSpace[_3D], (_: Point[_3D]) => EuclideanVector.zeros[_3D])
-
       val cov: MatrixValuedPDKernel[_3D] = new MatrixValuedPDKernel[_3D]() {
         private val directionMatrix = getAxisOfMainVariance(referenceMesh)
         // Adds more variance along the main direction of variation (the bone length)
         private val baseMatrix = directionMatrix * DenseMatrix((10.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)) * directionMatrix.t
-        private val baseKernel = GaussianKernel[_3D](90) * 10.0
-        private val midKernels = DiagonalKernel[_3D](GaussianKernel(40), 3) * 5.0
-        private val smallKernels = DiagonalKernel[_3D](GaussianKernel(10), 3) * 3.0
+        private val baseKernel = GaussianKernel3D(90) * 10.0
+        private val midKernels = DiagonalKernel3D(GaussianKernel3D(40), 3) * 5.0
+        private val smallKernels = DiagonalKernel3D(GaussianKernel3D(10), 3) * 3.0
 
         override protected def k(x: Point[_3D], y: Point[_3D]): DenseMatrix[Double] = {
           (baseMatrix * baseKernel(x, y)) + midKernels(x, y) + smallKernels(x, y)
@@ -81,15 +79,15 @@ object CreateGPModel {
 
         override def outputDim = 3
 
-        override def domain: Domain[_3D] = RealSpace[_3D]
+        override def domain: Domain[_3D] = EuclideanSpace3D
       }
 
-      val gp = GaussianProcess[_3D, EuclideanVector[_3D]](zeroMean, cov)
+      val gp = GaussianProcess[_3D, EuclideanVector[_3D]](cov)
 
       val totalVariance = approxTotalVariance(gp, referenceMesh)
       println("total variance  " + totalVariance)
 
-      val numOfSamplePoints = math.min(i*2, referenceMesh.pointSet.numberOfPoints)
+      val numOfSamplePoints = math.min(i * 2, referenceMesh.pointSet.numberOfPoints)
       println(s"num of sampled points: $numOfSamplePoints")
       val sampler = UniformMeshSampler3D(referenceMesh, numberOfPoints = numOfSamplePoints)
       val lowRankGP: LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = LowRankGaussianProcess.approximateGPNystrom(gp, sampler, numBasisFunctions = i + 1)
@@ -102,7 +100,7 @@ object CreateGPModel {
       val modelGroup = ui.createGroup(s"Model-$i")
       ui.show(modelGroup, mm, "model")
 
-      StatismoIO.writeStatismoMeshModel(mm, outputModelFile)
+      StatisticalModelIO.writeStatisticalMeshModel(mm, outputModelFile)
     }
   }
 }

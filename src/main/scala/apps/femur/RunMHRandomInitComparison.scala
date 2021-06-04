@@ -24,11 +24,12 @@ import api.sampling.evaluators.SymmetricEvaluation
 import apps.femur.Paths.{dataFemurPath, generalPath}
 import apps.util.FileUtils
 import scalismo.geometry._
-import scalismo.io.{MeshIO, StatismoIO}
+import scalismo.io.{MeshIO, StatisticalModelIO}
+import scalismo.utils.Random.implicits.randomGenerator
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scalismo.utils.Random.implicits._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object RunMHRandomInitComparison {
 
@@ -39,7 +40,7 @@ object RunMHRandomInitComparison {
     val logPath = new File(dataFemurPath, "log")
 
     val modelFile = new File(dataFemurPath, "femur_gp_model_50-components.h5")
-    val model = StatismoIO.readStatismoMeshModel(modelFile).get
+    val model = StatisticalModelIO.readStatisticalMeshModel(modelFile).get
     println(s"Model file to be used: $modelFile")
 
     // Note that the test femurs are already aligned to the model reference after running "AlignShapes"
@@ -56,8 +57,8 @@ object RunMHRandomInitComparison {
     val numOfRNDSamples = numOfICPSamples * 5 // Length of Markov Chain
 
     val proposalIcp = MixedProposalDistributions.mixedProposalICP(model, targetMesh, numOfICPPointSamples, projectionDirection = ModelSampling)
-    val proposalRnd = MixedProposalDistributions.mixedProposalRandom(model)
-    val evaluator = ProductEvaluators.proximityAndIndependent(model, targetMesh, SymmetricEvaluation, uncertainty = 1.0, numberOfEvaluationPoints = numOfEvaluatorPoints)
+    val proposalRnd = MixedProposalDistributions.mixedRandomShapeProposal(model, Seq(0.1, 0.01, 0.001))
+    val evaluator = ProductEvaluators.proximityAndIndependent(model, targetMesh, SymmetricEvaluation, uncertainty = 2.0, numberOfEvaluationPoints = numOfEvaluatorPoints)
 
     val modelName = FileUtils.basename(modelFile)
     val targetName = FileUtils.basename(targetMeshFile)
@@ -68,7 +69,6 @@ object RunMHRandomInitComparison {
       val rotatCenter: EuclideanVector[_3D] = model.referenceMesh.pointSet.points.map(_.toVector).reduce(_ + _) * 1.0 / model.referenceMesh.pointSet.numberOfPoints.toDouble
       val initPoseParameters = PoseParameters(EuclideanVector3D(0, 0, 0), (0, 0, 0), rotationCenter = rotatCenter.toPoint)
       val initShape = MeshIO.readMesh(new File(dataFemurPath, "modelsamples").listFiles().find(f => f.getName == s"${i}.stl").get).get
-//      val initShapeParameters = InitialiseShapeParameters(model.rank, i)
       val initShapeParameters = ShapeParameters(model.coefficients(initShape))
 
       val initialParametersRandom = ModelFittingParameters(initPoseParameters, initShapeParameters)

@@ -19,10 +19,10 @@ package apps.bfm
 import java.io.File
 
 import apps.bfm.Paths.generalPath
-import scalismo.common.ScalarArray
+import scalismo.common.DiscreteField.ScalarMeshField
+import scalismo.common.{ScalarArray, ScalarMeshField}
 import scalismo.geometry._
-import scalismo.io.StatismoIO
-import scalismo.mesh.ScalarMeshField
+import scalismo.io.StatisticalModelIO
 import scalismo.numerics.UniformMeshSampler3D
 import scalismo.statisticalmodel.{GaussianProcess, LowRankGaussianProcess, StatisticalMeshModel}
 import scalismo.ui.api.ScalismoUI
@@ -33,34 +33,33 @@ object CreateGPModel {
   implicit val random: Random = Random(1024)
 
   def main(args: Array[String]): Unit = {
-      scalismo.initialize()
+    scalismo.initialize()
 
 
-      val modelFile = new File(generalPath, "model2017-1_face12_nomouth.h5")
-      val model = StatismoIO.readStatismoMeshModel(modelFile, "shape").get
+    val modelFile = new File(generalPath, "model2017-1_face12_nomouth.h5")
+    val model = StatisticalModelIO.readStatisticalMeshModel(modelFile, "shape").get
 
-      val numOfBasisFunctions = 200
-//      val referenceMesh = model.referenceMesh
-      val referenceMesh = model.referenceMesh.operations.decimate(2000) // Speed up - but makes the model more coarse
+    val numOfBasisFunctions = 200
+    val referenceMesh = model.referenceMesh.operations.decimate(2000) // Speed up - but makes the model more coarse
 
 
-      val numSamplePoints = 800
+    val numSamplePoints = 800
 
-      val sa: ScalarArray[Int] = ScalarArray(Array.fill[Int](referenceMesh.pointSet.numberOfPoints)(3))
-      val smf: ScalarMeshField[Int] = ScalarMeshField(referenceMesh, sa)
-      val sem: ScalarMeshField[Int] = ScalarMeshField(referenceMesh, sa)
-      val faceMask = FaceMask(smf, sem)
+    val sa: ScalarArray[Int] = ScalarArray(Array.fill[Int](referenceMesh.pointSet.numberOfPoints)(3))
+    val smf: ScalarMeshField[Int] = ScalarMeshField(referenceMesh, sa)
+    val sem: ScalarMeshField[Int] = ScalarMeshField(referenceMesh, sa)
+    val faceMask = FaceMask(smf, sem)
 
-      val faceKernel = FaceKernel(faceMask, referenceMesh)
-      val gp = GaussianProcess[_3D, EuclideanVector[_3D]](faceKernel)
-      val sampler = UniformMeshSampler3D(referenceMesh, numberOfPoints = numSamplePoints)
-      val lowRankGP: LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = LowRankGaussianProcess.approximateGPNystrom(gp, sampler, numBasisFunctions = numOfBasisFunctions)
+    val faceKernel = FaceKernel(faceMask, referenceMesh)
+    val gp = GaussianProcess[_3D, EuclideanVector[_3D]](faceKernel)
+    val sampler = UniformMeshSampler3D(referenceMesh, numberOfPoints = numSamplePoints)
+    val lowRankGP: LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = LowRankGaussianProcess.approximateGPNystrom(gp, sampler, numBasisFunctions = numOfBasisFunctions)
 
-      val gpModel = StatisticalMeshModel(referenceMesh, lowRankGP)
+    val gpModel = StatisticalMeshModel(referenceMesh, lowRankGP)
 
-      val ui = ScalismoUI()
-      ui.show(gpModel, "GP")
+    val ui = ScalismoUI()
+    ui.show(gpModel, "GP")
 
-      StatismoIO.writeStatismoMeshModel(gpModel, new File(generalPath, s"faceGPmodel_${numOfBasisFunctions}c.h5"))
+    StatisticalModelIO.writeStatisticalMeshModel(gpModel, new File(generalPath, s"faceGPmodel_${numOfBasisFunctions}c.h5"))
   }
 }

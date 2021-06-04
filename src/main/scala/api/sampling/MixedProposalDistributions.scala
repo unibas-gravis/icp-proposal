@@ -21,22 +21,31 @@ import api.sampling.proposals._
 import scalismo.mesh.TriangleMesh3D
 import scalismo.sampling.proposals.MixtureProposal
 import scalismo.sampling.proposals.MixtureProposal.ProposalGeneratorWithTransition
-import scalismo.statisticalmodel.StatisticalMeshModel
 import scalismo.sampling.proposals.MixtureProposal.implicits._
-import scalismo.utils.Random.implicits._
+import scalismo.statisticalmodel.StatisticalMeshModel
 
 object MixedProposalDistributions {
 
-  def mixedProposalRandom(model: StatisticalMeshModel): ProposalGeneratorWithTransition[ModelFittingParameters] = {
+  def mixedRandomPoseProposal(rotYaw: Double = 0.01, rotPitch: Double = 0.01, rotRoll: Double = 0.01, transX: Double = 0.1, transY: Double = 0.1, transZ: Double = 0.1)(implicit rand: scalismo.utils.Random): ProposalGeneratorWithTransition[ModelFittingParameters] = {
     val mixproposal = MixtureProposal(
-        0.5 *: RandomShapeUpdateProposal(model, 0.1, generatedBy = "RandomShape-0.1") +
-        0.5 *: RandomShapeUpdateProposal(model, 0.01, generatedBy = "RandomShape-0.01") +
-        0.5 *: RandomShapeUpdateProposal(model, 0.001, generatedBy = "RandomShape-0.001")
+        0.5 *: GaussianAxisRotationProposal(rotYaw, YawAxis, generatedBy = s"RotationYaw-${rotYaw}") +
+        0.5 *: GaussianAxisRotationProposal(rotPitch, PitchAxis, generatedBy = s"RotationPitch-${rotPitch}") +
+        0.5 *: GaussianAxisRotationProposal(rotRoll, RollAxis, generatedBy = s"RotationRoll-${rotRoll}") +
+        0.5 *: GaussianAxisTranslationProposal(transX, 0, generatedBy = s"TranslationX-${transX}") +
+        0.5 *: GaussianAxisTranslationProposal(transY, 1, generatedBy = s"TranslationY-${transY}") +
+        0.5 *: GaussianAxisTranslationProposal(transZ, 2, generatedBy = s"TranslationZ-${transZ}")
     )
     mixproposal
   }
 
-  def mixedProposalICP(model: StatisticalMeshModel, target: TriangleMesh3D, numOfSamplePoints: Int, projectionDirection: IcpProjectionDirection = ModelAndTargetSampling, tangentialNoise: Double = 100.0, noiseAlongNormal: Double = 3.0, stepLength: Double = 0.1, boundaryAware: Boolean = true): ProposalGeneratorWithTransition[ModelFittingParameters] = {
+  def mixedRandomShapeProposal(model: StatisticalMeshModel, steps: Seq[Double] = Seq(0.1))(implicit rand: scalismo.utils.Random): ProposalGeneratorWithTransition[ModelFittingParameters] = {
+    val proposals = steps.map{s =>
+      (0.5, RandomShapeUpdateProposal(model, s, generatedBy = s"RandomShape-${s}"))
+    }
+    MixtureProposal.fromProposalsWithTransition(proposals: _ *)
+  }
+
+  def mixedProposalICP(model: StatisticalMeshModel, target: TriangleMesh3D, numOfSamplePoints: Int, projectionDirection: IcpProjectionDirection = ModelAndTargetSampling, tangentialNoise: Double = 10.0, noiseAlongNormal: Double = 5.0, stepLength: Double = 0.1, boundaryAware: Boolean = true)(implicit rand: scalismo.utils.Random): ProposalGeneratorWithTransition[ModelFittingParameters] = {
 
     val rate = 0.5
 

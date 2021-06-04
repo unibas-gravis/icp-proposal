@@ -40,7 +40,6 @@ object AlignShapes {
     val alignedMeshesPath = new File(alignedPath, "meshes")
     alignedMeshesPath.mkdir()
 
-    val referenceMesh = MeshIO.readMesh(new File(dataFemurPath, "femur_reference.stl")).get
     val referenceLMs = LandmarkIO.readLandmarksJson[_3D](new File(dataFemurPath, "femur_reference.json")).get
     val origin = Point3D(0, 0, 0)
 

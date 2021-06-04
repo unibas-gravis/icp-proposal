@@ -18,20 +18,19 @@ package apps.bfm
 
 import java.io.File
 
-import scalismo.geometry._3D
-import scalismo.io.{MeshIO, StatismoIO}
-import scalismo.mesh.TriangleMesh
-import scalismo.statisticalmodel.StatisticalMeshModel
-
 import apps.bfm.Paths.generalPath
 import apps.util.FileUtils
+import scalismo.geometry._3D
+import scalismo.io.{MeshIO, StatisticalModelIO}
+import scalismo.mesh.TriangleMesh
+import scalismo.statisticalmodel.StatisticalMeshModel
 
 object LoadTestData {
 
   def modelAndTarget(targetIndex: Int = 0): (StatisticalMeshModel, String, TriangleMesh[_3D], TriangleMesh[_3D], File) = {
 
     val modelFile = new File(generalPath, "faceGPmodel_200c.h5")
-    val model = StatismoIO.readStatismoMeshModel(modelFile).get
+    val model = StatisticalModelIO.readStatisticalMeshModel(modelFile).get
 
     println(s"Model file to be used: $modelFile")
 

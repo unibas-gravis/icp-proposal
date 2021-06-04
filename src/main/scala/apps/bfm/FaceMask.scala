@@ -16,40 +16,41 @@
 
 package apps.bfm
 
-import scalismo.common.{PointId, UnstructuredPointsDomain}
+import scalismo.common.DiscreteField.ScalarMeshField
+import scalismo.common.{PointId, ScalarMeshField, UnstructuredPointsDomain3D}
 import scalismo.geometry.{Point, _3D}
 import scalismo.kernels.GaussianKernel
-import scalismo.mesh.{ScalarMeshField, TriangleMesh}
+import scalismo.mesh.TriangleMesh
 import scalismo.utils.Memoize
 
 case class FaceMask(levelMask: ScalarMeshField[Int], semanticMask: ScalarMeshField[Int]) {
 
-  def isEarRegion(id : PointId) : Boolean = {
+  def isEarRegion(id: PointId): Boolean = {
     semanticMask(id) == 3 //1
   }
 
-  def isLipPoint(id : PointId) : Boolean = {
+  def isLipPoint(id: PointId): Boolean = {
     semanticMask(id) == 3 //2
   }
 
-  def isNoseRegion(id : PointId) : Boolean = {
+  def isNoseRegion(id: PointId): Boolean = {
     semanticMask(id) == 3
   }
 
   // Returns a value in the interval [0,1] indicating whether a point belongs to the region
-  def computeSmoothedRegions(referenceMesh: TriangleMesh[_3D], level : Int, stddev : Double) : Point[_3D] => Double = {
+  def computeSmoothedRegions(referenceMesh: TriangleMesh[_3D], level: Int, stddev: Double): Point[_3D] => Double = {
 
-    val transformedMask = levelMask.copy(mesh = referenceMesh)
+    val transformedMask = ScalarMeshField(referenceMesh, levelMask.data)
     val pointsWithRegions = transformedMask.pointsWithValues.toIndexedSeq
 
     val regionSmoother = GaussianKernel[_3D](stddev)
-    val regionPts = UnstructuredPointsDomain(pointsWithRegions.filter(_._2 >= level).map(_._1))
+    val regionPts = UnstructuredPointsDomain3D(pointsWithRegions.filter(_._2 >= level).map(_._1))
 
-    def regionWeight(p : Point[_3D]) : Double = {
-      regionSmoother(regionPts.findClosestPoint(p).point,p)
+    def regionWeight(p: Point[_3D]): Double = {
+      regionSmoother(regionPts.pointSet.findClosestPoint(p).point, p)
     }
 
-    Memoize(regionWeight,referenceMesh.pointSet.numberOfPoints)
+    Memoize(regionWeight, referenceMesh.pointSet.numberOfPoints)
   }
 
 }

@@ -17,9 +17,9 @@
 package apps.femur
 
 import api.sampling.ShapeParameters
-import scalismo.utils.Random
 import breeze.linalg.{DenseMatrix, DenseVector}
 import scalismo.statisticalmodel.MultivariateNormalDistribution
+import scalismo.utils.Random
 
 
 object RandomSamplesFromModel {

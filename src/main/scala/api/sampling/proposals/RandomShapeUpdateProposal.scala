@@ -29,7 +29,6 @@ case class RandomShapeUpdateProposal(model: StatisticalMeshModel, stdev: Double,
 
   private val rank: Int = model.rank
   private val perturbationDistr = new MultivariateNormalDistribution(DenseVector.zeros(rank), DenseMatrix.eye[Double](rank) * stdev * stdev)
-  private val independentDistr = breeze.stats.distributions.Gaussian(0, stdev)
 
   override def propose(theta: ModelFittingParameters): ModelFittingParameters = {
     val currentCoeffs = theta.shapeParameters.parameters
@@ -37,7 +36,11 @@ case class RandomShapeUpdateProposal(model: StatisticalMeshModel, stdev: Double,
   }
 
   override def logTransitionProbability(from: ModelFittingParameters, to: ModelFittingParameters): Double = {
-    val residual = to.shapeParameters.parameters - from.shapeParameters.parameters
-    perturbationDistr.logpdf(residual)
+    if (to.copy(shapeParameters = from.shapeParameters).allParameters != from.allParameters) {
+      Double.NegativeInfinity
+    } else {
+      val residual = to.shapeParameters.parameters - from.shapeParameters.parameters
+      perturbationDistr.logpdf(residual)
+    }
   }
 }
