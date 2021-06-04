@@ -69,9 +69,10 @@ case class NonRigidIcpProposal(
 
 
   override def logTransitionProbability(from: ModelFittingParameters, to: ModelFittingParameters): Double = {
-    if (from.shapeParameters.parameters == to.shapeParameters.parameters) {
+    if (to.copy(shapeParameters = from.shapeParameters).allParameters != from.allParameters){
       Double.NegativeInfinity
-    } else {
+    }
+    else {
       val pos = cashedPosterior(from)
       val posterior = StatisticalMeshModel(referenceMesh, pos)
 
