@@ -19,16 +19,15 @@ package apps.bfm
 import java.awt.Color
 import java.io.File
 
-import api.other.{ModelAndTargetSampling, RegistrationComparison}
+import api.other.{ModelAndTargetSampling, ModelSampling, RegistrationComparison}
 import api.sampling.{MixedProposalDistributions, ModelFittingParameters, ProductEvaluators, SamplingRegistration}
-import api.sampling.evaluators.ModelToTargetEvaluation
+import api.sampling.evaluators.{ModelToTargetEvaluation, SymmetricEvaluation}
 import scalismo.ui.api.ScalismoUI
 import Paths.generalPath
+import scalismo.sampling.proposals.MixtureProposal
 import scalismo.utils.Random.implicits.randomGenerator
 
-import scala.collection.parallel.ForkJoinTaskSupport
-
-object BfmFitting {
+object BfmFittingPartial {
 
   def main(args: Array[String]) {
     scalismo.initialize()
@@ -39,18 +38,14 @@ object BfmFitting {
     fileList.foreach(println(_))
 
     fileList.zipWithIndex.foreach{case (_, faceIndex) =>
-
-      Thread.sleep(1000*faceIndex)
       println(s"FACE INDEX: ${faceIndex}")
 
       // load the data
       val (modelInit, _, targetGroundTruth, targetMeshPartialInit, targetLogFile) = LoadTestData.modelAndTarget(faceIndex)
 
-//      val targetMeshPartial = targetMeshPartialInit
-      val targetMeshPartial = targetMeshPartialInit.operations.decimate(1000) //      For speed up - decimate the target mesh
+      val targetMeshPartial = targetMeshPartialInit.operations.decimate(500) //      For speed up - decimate the target mesh
 
-      val model = modelInit
-//      val model = modelInit.decimate(1000) //      For speed up - decimate the model
+      val model = modelInit.decimate(500)
 
       println(s"Number of vertices in model: ${model.mean.pointSet.numberOfPoints}")
 
@@ -61,45 +56,29 @@ object BfmFitting {
       val modelGroup = ui.createGroup("modelGroup")
       val targetGroup = ui.createGroup("targetGroup")
       val finalGroup = ui.createGroup("finalGroup")
-      val showModel = ui.show(modelGroup, model, "model")
+      val showModel = ui.show(modelGroup, modelInit, "model")
       val showGt = ui.show(targetGroup, targetGroundTruth, "Ground-truth")
       showGt.opacity = 0.0
-      val showTarget = ui.show(targetGroup, targetMeshPartial, "target")
+      val showTarget = ui.show(targetGroup, targetMeshPartialInit, "target")
       showTarget.color = Color.YELLOW
 
       // proposal
-      val numOfICPointSamples = model.rank*2
-      val proposalIcpInit = MixedProposalDistributions.mixedProposalICP(
-        model,
-        targetMeshPartial,
-        numOfICPointSamples,
-        projectionDirection = ModelAndTargetSampling,
-        tangentialNoise = 10.0,
-        noiseAlongNormal = 2.0,
-        stepLength = 0.1
-      )
+      val numOfICPPointSamples = model.rank * 2
+      val proposalICP = MixedProposalDistributions.mixedProposalICP(model, targetMeshPartial, numOfICPPointSamples, projectionDirection = ModelSampling, tangentialNoise = 6.0, noiseAlongNormal = 3.0, stepLength = 0.1)
+      val proposalRandomPose = MixedProposalDistributions.mixedRandomPoseProposal()
+      val proposalRandomShape = MixedProposalDistributions.mixedRandomShapeProposal(model)
 
-      val proposalIcpNext = MixedProposalDistributions.mixedProposalICP(
-        model,
-        targetMeshPartial,
-        numOfICPointSamples,
-        projectionDirection = ModelAndTargetSampling,
-        tangentialNoise = 4.0,
-        noiseAlongNormal = 2.0,
-        stepLength = 0.5
-      )
+      val proposal = MixtureProposal.fromProposalsWithTransition(Seq((0.4, proposalRandomPose), (0.55, proposalICP), (0.05, proposalRandomShape)): _ *)
+
+
       // evaluator
-      val numberOfEvaluationPoints = numOfICPointSamples*2
-      val avgUncertainty = 0.2
-      val maxUncertainty = 10.0
-      val evaluator = ProductEvaluators.proximityAndCollectiveHausdorffBoundaryAware(
-        model,
-        targetMeshPartial,
-        uncertaintyAvg = avgUncertainty,
-        uncertaintyMax = maxUncertainty,
-        numberOfEvaluationPoints = numberOfEvaluationPoints,
-        evaluationMode = ModelToTargetEvaluation
-      )
+      val numberOfEvaluationPoints = numOfICPPointSamples * 2
+      val avgUncertainty = 0.3
+      val maxUncertainty = 1.0
+      // evaluator
+      val numOfEvaluatorPoints = numOfICPPointSamples*2
+
+      val evaluator = ProductEvaluators.proximityAndCollectiveHausdorffBoundaryAware(model, targetMeshPartial, evaluationMode = SymmetricEvaluation, uncertaintyAvg = avgUncertainty, numberOfEvaluationPoints = numOfEvaluatorPoints, uncertaintyMax = maxUncertainty, mean = 0.1)
 
       // run the registration
       val numOfSamples = 10000
@@ -110,28 +89,16 @@ object BfmFitting {
         modelUiUpdateInterval = 10,
         acceptInfoPrintInterval = 100
       )
-      val bestRegistrationParsInit = samplingRegistration.runfitting(
+      val bestRegistrationPars = samplingRegistration.runfitting(
         evaluator,
-        proposalIcpInit,
-        100,
+        proposal,
+        numOfSamples,
         jsonName = targetLogFile
       )
 
       // visualize result
-      val bestRegistration = ModelFittingParameters.transformedMesh(model, bestRegistrationParsInit)
+      val bestRegistration = ModelFittingParameters.transformedMesh(model, bestRegistrationPars)
       ui.show(finalGroup, bestRegistration, "best-init-fit")
-
-      val bestRegistrationParsNext = samplingRegistration.runfitting(
-        evaluator,
-        proposalIcpNext,
-        numOfSamples,
-        jsonName = targetLogFile,
-        initialModelParameters = Option(bestRegistrationParsInit)
-      )
-
-      // visualize result
-      val bestRegistrationFinal = ModelFittingParameters.transformedMesh(model, bestRegistrationParsNext)
-      ui.show(finalGroup, bestRegistrationFinal, "best-init-fit")
 
       // evaluation
       RegistrationComparison.evaluateReconstruction2GroundTruthBoundaryAware("SAMPLE", bestRegistration, targetMeshPartial)
