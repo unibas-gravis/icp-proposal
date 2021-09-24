@@ -21,10 +21,8 @@ import breeze.stats.distributions.ContinuousDistr
 import scalismo.common.PointId
 import scalismo.geometry.{Point, _3D}
 import scalismo.mesh.TriangleMesh3D
-import scalismo.numerics.UniformMeshSampler3D
 import scalismo.sampling.DistributionEvaluator
 import scalismo.statisticalmodel.StatisticalMeshModel
-import scalismo.utils.Random.implicits._
 
 case class IndependentPointDistanceEvaluator(model: StatisticalMeshModel,
                                              targetMesh: TriangleMesh3D,
@@ -33,28 +31,11 @@ case class IndependentPointDistanceEvaluator(model: StatisticalMeshModel,
                                              numberOfPointsForComparison: Int)
   extends DistributionEvaluator[ModelFittingParameters] with EvaluationCaching {
 
-  def getRandomPointsOnTarget: IndexedSeq[Point[_3D]] = {
-    if (numberOfPointsForComparison >= targetMesh.pointSet.numberOfPoints) {
-      targetMesh.pointSet.points.toIndexedSeq
-    }
-    else {
-      UniformMeshSampler3D(targetMesh, numberOfPointsForComparison).sample().map(_._1)
-    }
-  }
+  private val decimatedModel = model.decimate(numberOfPointsForComparison)
+  private val decimatedTarget = targetMesh.operations.decimate(numberOfPointsForComparison)
 
-  def getRandomPointIdsOnModel: IndexedSeq[PointId] = {
-    if (numberOfPointsForComparison >= model.referenceMesh.pointSet.numberOfPoints) {
-      model.referenceMesh.pointSet.pointIds.toIndexedSeq
-    }
-    else {
-      UniformMeshSampler3D(model.referenceMesh, numberOfPointsForComparison).sample().map(_._1)
-        .map(p => model.referenceMesh.pointSet.findClosestPoint(p).id)
-    }
-  }
-
-  // Make sure not to oversample if the numberOfPointsForComparison is set higher than the points in the target or the model
-  private val randomPointsOnTarget: IndexedSeq[Point[_3D]] = getRandomPointsOnTarget
-  private val randomPointIdsOnModel: IndexedSeq[PointId] = getRandomPointIdsOnModel
+  private val randomPointsOnTarget: IndexedSeq[Point[_3D]] = decimatedTarget.pointSet.points.toIndexedSeq
+  private val randomPointIdsOnModel: IndexedSeq[PointId] = decimatedModel.referenceMesh.pointSet.pointIds.toIndexedSeq
 
   def distModelToTarget(modelSample: TriangleMesh3D): Double = {
     val pointsOnSample = randomPointIdsOnModel.map(modelSample.pointSet.point)

@@ -21,9 +21,9 @@ import java.io.File
 
 import api.sampling.ModelFittingParameters
 import api.sampling.loggers.{JSONAcceptRejectLogger, jsonLogFormat}
+import apps.femur.Paths.dataFemurPath
 import apps.util.{LogHelper, PosteriorVariability}
 import scalismo.ui.api.ScalismoUI
-import apps.femur.Paths.dataFemurPath
 
 object PosteriorVariabilityToMeshColor {
 
@@ -40,7 +40,7 @@ object PosteriorVariabilityToMeshColor {
 
     val logObj = new JSONAcceptRejectLogger[ModelFittingParameters](new File(logPath, jsonFileName))
     val logInit: IndexedSeq[jsonLogFormat] = logObj.loadLog()
-    val burnInPhase = 300
+    val burnInPhase = 200
 
     val logSamples = LogHelper.samplesFromLog(logInit, takeEveryN = 50, total = 10000, burnInPhase)
     println(s"Number of samples from log: ${logSamples.length}/${logInit.length - burnInPhase}")

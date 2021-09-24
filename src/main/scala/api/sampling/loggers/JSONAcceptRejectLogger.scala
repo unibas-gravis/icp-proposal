@@ -109,12 +109,6 @@ case class JSONAcceptRejectLogger[A](filePath: File, evaluators: Option[Map[Stri
 
   def percentAccepted: Double = 1.0 - percentRejected
 
-  def percentAcceptedOfType(id: String): Double = {
-    val filtered = logStatus.filter(f => f.name == id)
-    val accepted = filtered.filter(f => f.status)
-    accepted.length.toDouble / filtered.length.toDouble
-  }
-
   def writeLog(): Unit = {
     val content = logStatus.toIndexedSeq
     try {
@@ -156,6 +150,23 @@ case class JSONAcceptRejectLogger[A](filePath: File, evaluators: Option[Map[Stri
     generatedBy.foreach { name =>
       println(s"${id} ${name}: ${percentAcceptedOfType(name)}")
     }
+    val logLast100 = logStatus.takeRight(100)
+    println(s"${id} Last 100 samples accepted (${100}): ${logLast100.map(f => if (f.status) 1.0 else .0).sum / 100.0}")
+    generatedBy.foreach { name =>
+      println(s"${id} ${name}: ${percentAcceptedOfTypeLocal(name, logLast100)}")
+    }
+  }
+
+  def percentAcceptedOfType(id: String): Double = {
+    val filtered = logStatus.filter(f => f.name == id)
+    val accepted = filtered.filter(f => f.status)
+    accepted.length.toDouble / filtered.length.toDouble
+  }
+
+  def percentAcceptedOfTypeLocal(id: String, localLog: ListBuffer[jsonLogFormat]): Double = {
+    val filtered = localLog.filter(f => f.name == id)
+    val accepted = filtered.filter(f => f.status)
+    accepted.length.toDouble / filtered.length.toDouble
   }
 
   override def toString: String = {
